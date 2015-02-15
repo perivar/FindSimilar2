@@ -1,8 +1,9 @@
 # FindSimilar 2
 ## Audio Search Utility utilising Soundfingerprinting methods
 
-*FindSimilar. Version 2.0.1.*
-**Copyright (C) 2012-2015 Per Ivar Nerseth perivar@nerseth.com**
+*Version 2.0.1.*
+*Copyright (C) 2012-2015 Per Ivar Nerseth perivar@nerseth.com*
+
 
 **A massive amount of credits goes to:**
 * Sound Fingerprinting framework
@@ -10,6 +11,9 @@
 * Code license: CPOL v.1.02
 * ciumac.sergiu@gmail.com
 
+
+Usage
+=====
 ```
 Usage: FindSimilar.exe <Arguments>
 
