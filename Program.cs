@@ -15,6 +15,7 @@ using Soundfingerprinting; // Repository
 using Soundfingerprinting.Fingerprinting; // FingerprintService
 using Soundfingerprinting.DbStorage; // DatabaseService
 using Soundfingerprinting.Hashing; // IPermutations
+using Soundfingerprinting.DbStorage.Entities; // Track
 
 using System.Diagnostics; // Stopwatch
 
@@ -140,7 +141,6 @@ namespace FindSimilar2
 				string queryPath = "";
 				int queryId = -1;
 				int numToTake = 20;
-				double percentage = 0.4; // percentage below and above when querying
 				bool resetdb = false;
 				bool silent = false;
 
@@ -162,9 +162,6 @@ namespace FindSimilar2
 				if(CommandLine["num"] != null) {
 					string num = CommandLine["num"];
 					numToTake = int.Parse(num);
-				}
-				if(CommandLine["percentage"] != null) {
-					double.TryParse(CommandLine["percentage"], NumberStyles.Number,CultureInfo.InvariantCulture, out percentage);
 				}
 				
 				resetdb |= CommandLine["resetdb"] != null;
@@ -217,6 +214,23 @@ namespace FindSimilar2
 						Console.Out.WriteLine("No directory found {0}!", scanPath);
 					}
 				}
+				
+				if (queryPath != "") {
+					var fi = new FileInfo(queryPath);
+					FindSoundfingerprinting(fi, repository, numToTake);
+					System.Console.ReadLine();
+				}
+				
+				if (queryId != -1) {
+					Track track = databaseService.ReadTrackById(queryId);
+					if (track != null && track.FilePath != null) {
+						var fi = new FileInfo(track.FilePath);
+						FindSoundfingerprinting(fi, repository, numToTake);
+					} else {
+						Console.Out.WriteLine("Track {0} not found!", queryId);
+					}
+					System.Console.ReadLine();
+				}
 			}
 			
 			private static void PrintUsage() {
@@ -237,7 +251,6 @@ namespace FindSimilar2
 				Console.WriteLine("\t-skipduration=x.x <skip files longer than x seconds, used together with scandir>");
 				Console.WriteLine("\t-silent\t<do not output so much info, used together with scandir>");
 				Console.WriteLine("\t-num=<number of matches to return when querying>");
-				Console.WriteLine("\t-percentage=0.x <percentage above and below duration when querying>");
 				Console.WriteLine();
 				Console.WriteLine("\t-? or -help=show this usage help>");
 
@@ -250,5 +263,23 @@ namespace FindSimilar2
 				Application.Run(new FindSimilarClientForm());
 			}
 			
+			private static void FindSoundfingerprinting(FileInfo fi, Repository repository, int numToTake) {
+				if (fi.Exists) {
+					List<QueryResult> queryList = Analyzer.SimilarTracksSoundfingerprintingList(fi,
+					                                                                            repository,
+					                                                                            1,
+					                                                                            false,
+					                                                                            false,
+					                                                                            null).Take(numToTake).ToList();
+
+					foreach (var entry in queryList)
+					{
+						Console.WriteLine("[{0}]\t{1}   ({2:0.0000})", entry.Id, Path.GetFileName(entry.Path), entry.Similarity);
+					}
+
+				} else {
+					Console.Out.WriteLine("No file found {0}!", fi);
+				}
+			}
 		}
 	}

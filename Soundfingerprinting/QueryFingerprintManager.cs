@@ -19,6 +19,7 @@
 		/// </summary>
 		/// <param name="signatures">Signature signatures from a song</param>
 		/// <param name="dbService">DatabaseService used to query the underlying database</param>
+		/// <param name="minHash">Min Hash</param>
 		/// <param name="lshHashTables">Number of hash tables from the database</param>
 		/// <param name="lshGroupsPerKey">Number of groups per hash table</param>
 		/// <param name="thresholdTables">Minimum number of hash tables that must be found for one signature to be considered a candidate (0 = return all candidates, 2+ = return only exact matches)</param>
@@ -47,9 +48,7 @@
 				
 				#region Please Wait Splash Screen Cancel Event
 				// check if the user clicked cancel
-				if (splashScreen.CancellationPending) {
-					break;
-				}
+				if (splashScreen != null) if (splashScreen.CancellationPending) { break; }
 				#endregion
 
 				if (signature == null) {
@@ -78,6 +77,8 @@
 				if (potentialCandidates.Count > 0) {
 					IList<Fingerprint> fingerprints = dbService.ReadFingerprintById(potentialCandidates.Keys);
 					Dictionary<Fingerprint, int> finalCandidates = fingerprints.ToDictionary(finger => finger, finger => potentialCandidates[finger.Id].Count);
+					
+					// this is the most time consuming process
 					ArrangeCandidatesAccordingToFingerprints(signature,
 					                                         finalCandidates,
 					                                         lshHashTables,
@@ -88,10 +89,17 @@
 				#region Please Wait Splash Screen Update
 				// calculate a percentage between 5 and 90
 				int percentage = (int) ((float) (signatureCounter) / (float) signatureTotalCount * 85) + 5;
-				if (splashScreen != null) splashScreen.SetProgress(percentage, String.Format("Searching for similar fingerprints.\n(Signature {0} of {1})", signatureCounter+1, signatureTotalCount));
+				if (splashScreen != null) {
+					splashScreen.SetProgress(percentage, String.Format("Searching for similar fingerprints.\n(Signature {0} of {1})", signatureCounter+1, signatureTotalCount));
+				} else {
+					Console.Write("\r{0}%\t(Signature {1} of {2})     ", percentage, signatureCounter+1, signatureTotalCount);
+				}
+				
 				signatureCounter++;
 				#endregion Updat
 			}
+			
+			if (splashScreen == null) Console.WriteLine();
 
 			stopWatch.Stop();
 			queryTime = stopWatch.ElapsedMilliseconds; /*Set the query Time parameter*/

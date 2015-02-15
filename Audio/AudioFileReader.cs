@@ -83,7 +83,7 @@ namespace FindSimilar2.Audio
 					Dbg.WriteLine("Temporary raw file: " + raw);
 					
 					toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
-					toraw.StartInfo.Arguments = " \"" + fileIn + "\" -r "+srate+" -e float -b 32 -G -t raw \"" + raw + "\" channels 1";
+					toraw.StartInfo.Arguments = " \"" + fileIn + "\" -r " + srate + " -e float -b 32 -G -t raw \"" + raw + "\" channels 1";
 					toraw.StartInfo.UseShellExecute = false;
 					toraw.StartInfo.RedirectStandardOutput = true;
 					toraw.StartInfo.RedirectStandardError = true;
@@ -112,23 +112,23 @@ namespace FindSimilar2.Audio
 						fs = fi.OpenRead();
 						int bytes = (int)fi.Length;
 						int samples = bytes/sizeof(float);
-						if ((samples*sizeof(float)) != bytes)
+						if ((samples * sizeof(float)) != bytes)
 							return null;
 
 						// if the audio file is larger than seconds to analyze,
 						// find a proper section to exctract
-						if (bytes > secondsToAnalyze*srate*sizeof(float)) {
-							int seekto = (bytes/2) - ((secondsToAnalyze/2)*sizeof(float)*srate);
+						if (bytes > secondsToAnalyze * srate * sizeof(float)) {
+							int seekto = (bytes/2) - ((secondsToAnalyze/2) * sizeof(float) * srate);
 							Dbg.WriteLine("Extracting section: seekto = " + seekto);
-							bytes = (secondsToAnalyze)*srate*sizeof(float);
-							fs.Seek((samples/2-(secondsToAnalyze/2)*srate)*sizeof(float), SeekOrigin.Begin);
+							bytes = (secondsToAnalyze) * srate * sizeof(float);
+							fs.Seek((samples/2-(secondsToAnalyze/2) * srate) * sizeof(float), SeekOrigin.Begin);
 						}
 						
 						var br = new BinaryReader(fs);
 						var bytesBuffer = new byte[bytes];
 						br.Read(bytesBuffer, 0, bytesBuffer.Length);
 						
-						int items = (int)bytes/sizeof(float);
+						int items = (int)bytes / sizeof(float);
 						floatBuffer = new float[items];
 						
 						for (int i = 0; i < items; i++) {
@@ -173,7 +173,7 @@ namespace FindSimilar2.Audio
 					Dbg.WriteLine("Temporary wav file: " + soxreadablewav);
 					
 					tosoxreadable.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
-					tosoxreadable.StartInfo.Arguments = " -quiet -vc null -vo null -ao pcm:fast:waveheader \""+fileIn+"\" -ao pcm:file=\\\""+soxreadablewav+"\\\"";
+					tosoxreadable.StartInfo.Arguments = " -quiet -vc null -vo null -ao pcm:fast:waveheader \"" + fileIn + "\" -ao pcm:file=\\\"" + soxreadablewav + "\\\"";
 					tosoxreadable.StartInfo.UseShellExecute = false;
 					tosoxreadable.StartInfo.RedirectStandardOutput = true;
 					tosoxreadable.StartInfo.RedirectStandardError = true;
@@ -229,7 +229,7 @@ namespace FindSimilar2.Audio
 					Dbg.WriteLine("Temporary wav file: " + wav);
 					
 					towav.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
-					towav.StartInfo.Arguments = " -quiet -ao pcm:fast:waveheader \""+fileIn+"\" -format floatle -af resample="+srate+":0:2,pan=1:0.5:0.5 -channels 1 -vo null -vc null -ao pcm:file=\\\""+wav+"\\\"";
+					towav.StartInfo.Arguments = " -quiet -ao pcm:fast:waveheader \"" + fileIn + "\" -format floatle -af resample="+srate+":0:2,pan=1:0.5:0.5 -channels 1 -vo null -vc null -ao pcm:file=\\\"" + wav + "\\\"";
 					towav.StartInfo.UseShellExecute = false;
 					towav.StartInfo.RedirectStandardOutput = true;
 					towav.StartInfo.RedirectStandardError = true;

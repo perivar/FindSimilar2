@@ -232,7 +232,13 @@ namespace FindSimilar2.AudioProxies
 			// BASS_SAMPLE_FLOAT	Produce 32-bit floating-point output.
 			// WDM drivers or the BASS_STREAM_DECODE flag are required to use this flag in Windows.
 			
-			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT); //Decode the stream
+			// Decode the stream
+			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L,
+			                                        BASSFlag.BASS_STREAM_DECODE |
+			                                        BASSFlag.BASS_SAMPLE_MONO |
+			                                        BASSFlag.BASS_SAMPLE_FLOAT);
+			
+			// Creating a stream failed.
 			if (stream == 0) {
 				// throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 				// failed creating the stream, something wrong with the audio file?
@@ -241,7 +247,12 @@ namespace FindSimilar2.AudioProxies
 			}
 			
 			// mixer stream
-			int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT);
+			int mixerStream = BassMix.BASS_Mixer_StreamCreate(samplerate, 1,
+			                                                  BASSFlag.BASS_STREAM_DECODE |
+			                                                  BASSFlag.BASS_SAMPLE_MONO |
+			                                                  BASSFlag.BASS_SAMPLE_FLOAT);
+			
+			// Creating mixer stream failed.
 			if (mixerStream == 0) {
 				//throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 				// failed creating mixer stream, something wrong with the audio file?
@@ -256,23 +267,28 @@ namespace FindSimilar2.AudioProxies
 			// BASS_MIXER_NORAMPIN	Do not ramp-in the start, including after seeking (BASS_Mixer_ChannelSetPosition).
 			// This is useful for gap-less playback, where a source channel is intended to seamlessly follow another. This does not affect volume and pan changes, which are always ramped.
 			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_DOWNMIX | BASSFlag.BASS_MIXER_NORAMPIN)) {
-				int bufferSize = samplerate * 20 * 4; /*read 10 seconds at each iteration*/
-				float[] buffer = new float[bufferSize];
-				List<float[]> chunks = new List<float[]>();
+
+				int bufferSize = samplerate * 10 * 4; // Read 10 seconds at each iteration
+				
+				var buffer = new float[bufferSize];
+				var chunks = new List<float[]>();
+				
 				int size = 0;
 				while ((float)(size) / samplerate * 1000 < totalmilliseconds) {
 					// get re-sampled/mono data
 					int bytesRead = Bass.BASS_ChannelGetData(mixerStream, buffer, bufferSize);
+					
 					if (bytesRead == 0) {
 						break;
 					}
 					
-					float[] chunk = new float[bytesRead / 4]; // each float contains 4 bytes
+					var chunk = new float[bytesRead / 4]; // each float contains 4 bytes
 					Array.Copy(buffer, chunk, bytesRead / 4);
 					chunks.Add(chunk);
 					size += bytesRead / 4; // size of the data
 				}
 
+				// Check if there are enough samples to return the data.
 				if ((float)(size) / samplerate * 1000 < (milliseconds + startmillisecond)) {
 					// not enough samples to return the requested data
 					Console.Out.WriteLine("[E152] Error reading audio file: {0}. Not enough samples to return the requested data!", filename);
@@ -280,11 +296,15 @@ namespace FindSimilar2.AudioProxies
 				}
 				
 				int start = (int)((float)startmillisecond * samplerate / 1000);
-				int end = (milliseconds <= 0) ? size : (int)((float)(startmillisecond + milliseconds) * samplerate / 1000);
+				
+				int end = (milliseconds <= 0)
+					? size
+					: (int)((float)(startmillisecond + milliseconds) * samplerate / 1000);
+				
 				data = new float[size];
 				int index = 0;
 				
-				// Concatenate
+				// Concat the pieces of the chunks.
 				foreach (float[] chunk in chunks) {
 					Array.Copy(chunk, 0, data, index, chunk.Length);
 					index += chunk.Length;
@@ -292,7 +312,7 @@ namespace FindSimilar2.AudioProxies
 				
 				// Select specific part of the song
 				if (start != 0 || end != size) {
-					float[] temp = new float[end - start];
+					var temp = new float[end - start];
 					Array.Copy(data, start, temp, 0, end - start);
 					data = temp;
 				}

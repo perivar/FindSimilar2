@@ -8,7 +8,7 @@ using System.Linq;
 
 using System.Diagnostics;
 
-using FindSimilar2.Audio; // AudioFileReader
+//using FindSimilar2.Audio; // AudioFileReader
 using FindSimilar2.AudioProxies; // BassProxy
 
 using Soundfingerprinting;
@@ -24,16 +24,11 @@ namespace FindSimilar2
 	/// </summary>
 	public partial class FindSimilarClientForm : Form
 	{
-		private static int DEFAULT_NUM_TO_TAKE = 200;
+		private const int DEFAULT_NUM_TO_TAKE = 200;
 		
-		// used for SCMS or Mandel Ellis searching
-		private static double DEFAULT_PERCENTAGE_ENABLED = 0.8;
-		private static double DEFAULT_PERCENTAGE_DISABLED = 1.0;
-
 		// Instance Variables
 		private IAudio player = null;
 		private string selectedFilePath = null;
-		private double percentage = DEFAULT_PERCENTAGE_ENABLED;
 		
 		// Soundfingerprinting
 		private DatabaseService databaseService = null;
@@ -69,7 +64,6 @@ namespace FindSimilar2
 			// Constructor code after the InitializeComponent() call.
 			//
 			this.version.Text = Program.VERSION;
-			//this.DistanceTypeCombo.DataSource = Enum.GetValues(typeof(AudioFeature.DistanceType));
 			this.ThresholdTablesCombo.DataSource = Enum.GetValues(typeof(ThresholdTables));
 			
 			// Instansiate Soundfingerprinting Repository
@@ -79,19 +73,9 @@ namespace FindSimilar2
 			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
 			repository = new Repository(permutations, databaseService, fingerprintService);
 			
-			if (rbScms.Checked) {
-				IgnoreFileLengthCheckBox.Visible = true;
-				DistanceTypeCombo.Visible = true;
-				LessAccurateCheckBox.Visible = false;
-				ThresholdTablesCombo.Visible = false;
-				SearchAllFilesCheckbox.Visible = false;
-			} else {
-				IgnoreFileLengthCheckBox.Visible = false;
-				DistanceTypeCombo.Visible = false;
-				LessAccurateCheckBox.Visible = true;
-				ThresholdTablesCombo.Visible = true;
-				SearchAllFilesCheckbox.Visible = true;
-			}
+			LessAccurateCheckBox.Visible = true;
+			ThresholdTablesCombo.Visible = true;
+			SearchAllFilesCheckbox.Visible = true;
 			
 			ReadAllTracks();
 		}
@@ -117,12 +101,7 @@ namespace FindSimilar2
 				if (player.CanPlay) {
 					player.Play();
 				} else {
-					Debug.WriteLine("Failed playing using Un4Seen Bass, trying to use mplayer ...");
-
-					float[] audioData = AudioFileReader.Decode(filePath, Analyzer.SAMPLING_RATE, Analyzer.SECONDS_TO_ANALYZE);
-					if (audioData != null && audioData.Length > 0) {
-						// Play
-					}
+					Debug.WriteLine("Failed playing using Un4Seen Bass ...");
 				}
 			}
 		}
@@ -300,21 +279,12 @@ namespace FindSimilar2
 		
 		void AudioFileQueryBtnClick(object sender, EventArgs e)
 		{
-			// convert extension string array to open file dialog filter
-			//openFileDialog.Filter = "Audio Files(*.wav;*.mp3)|*.wav;*.mp3|All files (*.*)|*.*";
-			//string filter = string.Join(";", Mir.extensionsWithStar);
-			//filter = String.Format("Audio Files({0})|{0}|All files (*.*)|*.*", filter);
 			const string filter = "All supported Audio Files|*.wav;*.ogg;*.mp1;*.m1a;*.mp2;*.m2a;*.mpa;*.mus;*.mp3;*.mpg;*.mpeg;*.mp3pro;*.aif;*.aiff;*.bwf;*.wma;*.wmv;*.aac;*.adts;*.mp4;*.m4a;*.m4b;*.mod;*.mdz;*.mo3;*.s3m;*.s3z;*.xm;*.xmz;*.it;*.itz;*.umx;*.mtm;*.flac;*.fla;*.oga;*.ogg;*.aac;*.m4a;*.m4b;*.mp4;*.mpc;*.mp+;*.mpp;*.ac3;*.wma;*.ape;*.mac|WAVE Audio|*.wav|Ogg Vorbis|*.ogg|MPEG Layer 1|*.mp1;*.m1a|MPEG Layer 2|*.mp2;*.m2a;*.mpa;*.mus|MPEG Layer 3|*.mp3;*.mpg;*.mpeg;*.mp3pro|Audio IFF|*.aif;*.aiff|Broadcast Wave|*.bwf|Windows Media Audio|*.wma;*.wmv|Advanced Audio Codec|*.aac;*.adts|MPEG 4 Audio|*.mp4;*.m4a;*.m4b|MOD Music|*.mod;*.mdz|MO3 Music|*.mo3|S3M Music|*.s3m;*.s3z|XM Music|*.xm;*.xmz|IT Music|*.it;*.itz;*.umx|MTM Music|*.mtm|Free Lossless Audio Codec|*.flac;*.fla|Free Lossless Audio Codec (Ogg)|*.oga;*.ogg|Advanced Audio Coding|*.aac|Advanced Audio Coding MPEG-4|*.m4a;*.m4b;*.mp4|Musepack|*.mpc;*.mp+;*.mpp|Dolby Digital AC-3|*.ac3|Windows Media Audio|*.wma|Monkey's Audio|*.ape;*.mac";
 			openFileDialog.Filter = filter;
 			if (openFileDialog.ShowDialog() == DialogResult.OK)
 			{
 				AudioFileQueryTextBox.Text = openFileDialog.FileName;
 			}
-		}
-		
-		void DistanceTypeComboSelectedValueChanged(object sender, EventArgs e)
-		{
-			//Enum.TryParse<AudioFeature.DistanceType>(DistanceTypeCombo.SelectedValue.ToString(), out distanceType);
 		}
 		
 		void AutoPlayCheckBoxCheckedChanged(object sender, EventArgs e)
@@ -326,22 +296,9 @@ namespace FindSimilar2
 			}
 		}
 		
-		void IgnoreFileLengthCheckedChanged(object sender, EventArgs e)
-		{
-			if (IgnoreFileLengthCheckBox.Checked) {
-				percentage = DEFAULT_PERCENTAGE_DISABLED;
-			} else {
-				percentage = DEFAULT_PERCENTAGE_ENABLED;
-			}
-		}
-		
 		void LessAccurateCheckBoxCheckedChanged(object sender, EventArgs e)
 		{
-			if (LessAccurateCheckBox.Checked) {
-				
-			} else {
-				
-			}
+			// do nothing else than using the value in FindByFilePathSoundfingerprinting
 		}
 		
 		void FindSimilarClientFormFormClosing(object sender, FormClosingEventArgs e)
@@ -390,7 +347,7 @@ namespace FindSimilar2
 			public bool DoSearchEverything { get; set; }
 		}
 
-		private void DoSoundfingerprintingsSearch(BackgroundWorkerArgument bgWorkerArg) {
+		private void DoSoundfingerprintingsSearch(object bgWorkerArg) {
 			
 			// Start "please wait" screen
 			splashScreen = new SplashSceenWaitingForm();
@@ -399,31 +356,24 @@ namespace FindSimilar2
 			
 			// check return value
 			DialogResult result = splashScreen.ShowDialog();
-			if (result == DialogResult.Cancel) {
-				// the user clicked cancel
-			}
-			else if (result == DialogResult.Abort) {
-				// an unhandled exception occured in user function
-				// you may get the exception information:
-				MessageBox.Show(splashScreen.Result.Error.Message);
-			}
-			else if (result == DialogResult.OK) {
-				// the background worker finished normally
-				
-				// the result of the background worker is stored in splashScreen.Result
-				var argObject = splashScreen.Result.Result as BackgroundWorkerArgument;
-				
-				if (argObject.QueryResultList != null) {
-					// Get query list from the argument object
-					queryResultList = new BindingList<QueryResult>( argObject.QueryResultList );
-					
-					// update grid
-					bs.DataSource = queryResultList;
-					dataGridView1.DataSource = queryResultList;
-
-					this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
-					this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-				}
+			switch (result) {
+				case DialogResult.Cancel:
+					break;
+				case DialogResult.Abort:
+					MessageBox.Show(splashScreen.Result.Error.Message);
+					break;
+				case DialogResult.OK:
+					var argObject = splashScreen.Result.Result as BackgroundWorkerArgument;
+					if (argObject.QueryResultList != null) {
+						// Get query list from the argument object
+						queryResultList = new BindingList<QueryResult>(argObject.QueryResultList);
+						// update grid
+						bs.DataSource = queryResultList;
+						dataGridView1.DataSource = queryResultList;
+						this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
+						this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+					}
+					break;
 			}
 		}
 		
@@ -457,7 +407,7 @@ namespace FindSimilar2
 				if (fi.Exists) {
 					
 					// create background worker arugment
-					BackgroundWorkerArgument bgWorkerArg = new BackgroundWorkerArgument {
+					var bgWorkerArg = new BackgroundWorkerArgument {
 						QueryFile = fi,
 						ThresholdTables = (int) ThresholdTablesCombo.SelectedValue,
 						OptimizeSignatureCount = LessAccurateCheckBox.Checked,
@@ -571,25 +521,6 @@ namespace FindSimilar2
 		#endregion
 		
 		#region Radio Button Change Events
-		void RbScmsCheckedChanged(object sender, EventArgs e)
-		{
-			if (rbScms.Checked) {
-				IgnoreFileLengthCheckBox.Visible = true;
-				DistanceTypeCombo.Visible = true;
-				LessAccurateCheckBox.Visible = false;
-				ThresholdTablesCombo.Visible = false;
-				SearchAllFilesCheckbox.Visible = false;
-			} else {
-				IgnoreFileLengthCheckBox.Visible = false;
-				DistanceTypeCombo.Visible = false;
-				LessAccurateCheckBox.Visible = true;
-				ThresholdTablesCombo.Visible = true;
-				SearchAllFilesCheckbox.Visible = true;
-			}
-			
-			ReadAllTracks();
-		}
-		
 		void RbSoundfingerprintingCheckedChanged(object sender, EventArgs e)
 		{
 			ReadAllTracks();

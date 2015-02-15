@@ -44,7 +44,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -resetdb</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects"</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">

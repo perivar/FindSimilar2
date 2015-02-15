@@ -48,23 +48,19 @@
 			this.copyFileURLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.dumpDebugInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
-			this.DistanceTypeCombo = new System.Windows.Forms.ComboBox();
 			this.GoBtn = new System.Windows.Forms.Button();
 			this.ResetBtn = new System.Windows.Forms.Button();
 			this.autoPlayCheckBox = new System.Windows.Forms.CheckBox();
-			this.IgnoreFileLengthCheckBox = new System.Windows.Forms.CheckBox();
 			this.versionLabel = new System.Windows.Forms.Label();
 			this.version = new System.Windows.Forms.Label();
-			this.rbScms = new System.Windows.Forms.RadioButton();
-			this.rbSoundfingerprinting = new System.Windows.Forms.RadioButton();
 			this.txtFilterResults = new System.Windows.Forms.TextBox();
 			this.lblFilterResults = new System.Windows.Forms.Label();
 			this.btnClearFilter = new System.Windows.Forms.Button();
 			this.lblFileCount = new System.Windows.Forms.Label();
 			this.database_count = new System.Windows.Forms.Label();
 			this.ThresholdTablesCombo = new System.Windows.Forms.ComboBox();
-			this.LessAccurateCheckBox = new System.Windows.Forms.CheckBox();
 			this.SearchAllFilesCheckbox = new System.Windows.Forms.CheckBox();
+			this.LessAccurateCheckBox = new System.Windows.Forms.CheckBox();
 			this.tabControl1.SuspendLayout();
 			this.tabFileSearch.SuspendLayout();
 			this.tabIdSearch.SuspendLayout();
@@ -76,7 +72,7 @@
 			// tabControl1
 			// 
 			this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.tabControl1.Controls.Add(this.tabFileSearch);
 			this.tabControl1.Controls.Add(this.tabIdSearch);
 			this.tabControl1.Controls.Add(this.tabStringSearch);
@@ -128,7 +124,7 @@
 			// AudioFileQueryTextBox
 			// 
 			this.AudioFileQueryTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.AudioFileQueryTextBox.Location = new System.Drawing.Point(68, 4);
 			this.AudioFileQueryTextBox.Name = "AudioFileQueryTextBox";
 			this.AudioFileQueryTextBox.Size = new System.Drawing.Size(554, 20);
@@ -203,8 +199,8 @@
 			// dataGridView1
 			// 
 			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-									| System.Windows.Forms.AnchorStyles.Left) 
-									| System.Windows.Forms.AnchorStyles.Right)));
+			| System.Windows.Forms.AnchorStyles.Left) 
+			| System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.ContextMenuStrip = this.contextMenuStrip1;
 			this.dataGridView1.Location = new System.Drawing.Point(12, 113);
@@ -221,10 +217,10 @@
 			// contextMenuStrip1
 			// 
 			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-									this.findSimilarToolStripMenuItem,
-									this.openFileLocationToolStripMenuItem,
-									this.copyFileURLToolStripMenuItem,
-									this.dumpDebugInfoToolStripMenuItem});
+			this.findSimilarToolStripMenuItem,
+			this.openFileLocationToolStripMenuItem,
+			this.copyFileURLToolStripMenuItem,
+			this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
 			this.contextMenuStrip1.Size = new System.Drawing.Size(215, 92);
 			// 
@@ -255,16 +251,6 @@
 			this.dumpDebugInfoToolStripMenuItem.Size = new System.Drawing.Size(214, 22);
 			this.dumpDebugInfoToolStripMenuItem.Text = "Dump debug info";
 			this.dumpDebugInfoToolStripMenuItem.Click += new System.EventHandler(this.DumpDebugInfoToolStripMenuItemClick);
-			// 
-			// DistanceTypeCombo
-			// 
-			this.DistanceTypeCombo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.DistanceTypeCombo.FormattingEnabled = true;
-			this.DistanceTypeCombo.Location = new System.Drawing.Point(623, 86);
-			this.DistanceTypeCombo.Name = "DistanceTypeCombo";
-			this.DistanceTypeCombo.Size = new System.Drawing.Size(150, 21);
-			this.DistanceTypeCombo.TabIndex = 4;
-			this.DistanceTypeCombo.SelectedValueChanged += new System.EventHandler(this.DistanceTypeComboSelectedValueChanged);
 			// 
 			// GoBtn
 			// 
@@ -300,17 +286,6 @@
 			this.autoPlayCheckBox.UseVisualStyleBackColor = true;
 			this.autoPlayCheckBox.CheckedChanged += new System.EventHandler(this.AutoPlayCheckBoxCheckedChanged);
 			// 
-			// IgnoreFileLengthCheckBox
-			// 
-			this.IgnoreFileLengthCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.IgnoreFileLengthCheckBox.Location = new System.Drawing.Point(498, 85);
-			this.IgnoreFileLengthCheckBox.Name = "IgnoreFileLengthCheckBox";
-			this.IgnoreFileLengthCheckBox.Size = new System.Drawing.Size(119, 24);
-			this.IgnoreFileLengthCheckBox.TabIndex = 8;
-			this.IgnoreFileLengthCheckBox.Text = "Ignore File Length";
-			this.IgnoreFileLengthCheckBox.UseVisualStyleBackColor = true;
-			this.IgnoreFileLengthCheckBox.CheckedChanged += new System.EventHandler(this.IgnoreFileLengthCheckedChanged);
-			// 
 			// versionLabel
 			// 
 			this.versionLabel.Location = new System.Drawing.Point(12, 6);
@@ -326,30 +301,6 @@
 			this.version.Size = new System.Drawing.Size(102, 17);
 			this.version.TabIndex = 10;
 			this.version.Text = "version_number";
-			// 
-			// rbScms
-			// 
-			this.rbScms.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.rbScms.Location = new System.Drawing.Point(225, 0);
-			this.rbScms.Name = "rbScms";
-			this.rbScms.Size = new System.Drawing.Size(58, 24);
-			this.rbScms.TabIndex = 11;
-			this.rbScms.Text = "Scms";
-			this.rbScms.UseVisualStyleBackColor = true;
-			this.rbScms.CheckedChanged += new System.EventHandler(this.RbScmsCheckedChanged);
-			// 
-			// rbSoundfingerprinting
-			// 
-			this.rbSoundfingerprinting.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.rbSoundfingerprinting.Checked = true;
-			this.rbSoundfingerprinting.Location = new System.Drawing.Point(277, 0);
-			this.rbSoundfingerprinting.Name = "rbSoundfingerprinting";
-			this.rbSoundfingerprinting.Size = new System.Drawing.Size(120, 24);
-			this.rbSoundfingerprinting.TabIndex = 12;
-			this.rbSoundfingerprinting.TabStop = true;
-			this.rbSoundfingerprinting.Text = "Soundfingerprinting";
-			this.rbSoundfingerprinting.UseVisualStyleBackColor = true;
-			this.rbSoundfingerprinting.CheckedChanged += new System.EventHandler(this.RbSoundfingerprintingCheckedChanged);
 			// 
 			// txtFilterResults
 			// 
@@ -379,43 +330,32 @@
 			// 
 			// lblFileCount
 			// 
-			this.lblFileCount.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.lblFileCount.Location = new System.Drawing.Point(418, 6);
+			this.lblFileCount.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.lblFileCount.Location = new System.Drawing.Point(590, 6);
 			this.lblFileCount.Name = "lblFileCount";
-			this.lblFileCount.Size = new System.Drawing.Size(100, 18);
+			this.lblFileCount.Size = new System.Drawing.Size(92, 18);
 			this.lblFileCount.TabIndex = 16;
 			this.lblFileCount.Text = "Files in database:";
+			this.lblFileCount.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
 			// database_count
 			// 
-			this.database_count.Anchor = System.Windows.Forms.AnchorStyles.Top;
-			this.database_count.Location = new System.Drawing.Point(507, 6);
+			this.database_count.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.database_count.Location = new System.Drawing.Point(679, 6);
 			this.database_count.Name = "database_count";
-			this.database_count.Size = new System.Drawing.Size(91, 17);
+			this.database_count.Size = new System.Drawing.Size(87, 17);
 			this.database_count.TabIndex = 17;
 			this.database_count.Text = "database_count";
+			this.database_count.TextAlign = System.Drawing.ContentAlignment.TopRight;
 			// 
 			// ThresholdTablesCombo
 			// 
 			this.ThresholdTablesCombo.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
 			this.ThresholdTablesCombo.FormattingEnabled = true;
-			this.ThresholdTablesCombo.Location = new System.Drawing.Point(623, 85);
+			this.ThresholdTablesCombo.Location = new System.Drawing.Point(623, 86);
 			this.ThresholdTablesCombo.Name = "ThresholdTablesCombo";
 			this.ThresholdTablesCombo.Size = new System.Drawing.Size(150, 21);
 			this.ThresholdTablesCombo.TabIndex = 18;
-			// 
-			// LessAccurateCheckBox
-			// 
-			this.LessAccurateCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.LessAccurateCheckBox.Checked = true;
-			this.LessAccurateCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.LessAccurateCheckBox.Location = new System.Drawing.Point(489, 82);
-			this.LessAccurateCheckBox.Name = "LessAccurateCheckBox";
-			this.LessAccurateCheckBox.Size = new System.Drawing.Size(128, 31);
-			this.LessAccurateCheckBox.TabIndex = 19;
-			this.LessAccurateCheckBox.Text = "Optimize for big files";
-			this.LessAccurateCheckBox.UseVisualStyleBackColor = true;
-			this.LessAccurateCheckBox.CheckedChanged += new System.EventHandler(this.LessAccurateCheckBoxCheckedChanged);
 			// 
 			// SearchAllFilesCheckbox
 			// 
@@ -427,30 +367,38 @@
 			this.SearchAllFilesCheckbox.Text = "Search all (very slow)";
 			this.SearchAllFilesCheckbox.UseVisualStyleBackColor = true;
 			// 
+			// LessAccurateCheckBox
+			// 
+			this.LessAccurateCheckBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+			this.LessAccurateCheckBox.Checked = true;
+			this.LessAccurateCheckBox.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.LessAccurateCheckBox.Location = new System.Drawing.Point(504, 85);
+			this.LessAccurateCheckBox.Name = "LessAccurateCheckBox";
+			this.LessAccurateCheckBox.Size = new System.Drawing.Size(104, 24);
+			this.LessAccurateCheckBox.TabIndex = 21;
+			this.LessAccurateCheckBox.Text = "Less Accurate";
+			this.LessAccurateCheckBox.UseVisualStyleBackColor = true;
+			// 
 			// FindSimilarClientForm
 			// 
 			this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
 			this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
 			this.ClientSize = new System.Drawing.Size(785, 408);
 			this.ContextMenuStrip = this.contextMenuStrip1;
-			this.Controls.Add(this.SearchAllFilesCheckbox);
 			this.Controls.Add(this.LessAccurateCheckBox);
+			this.Controls.Add(this.SearchAllFilesCheckbox);
 			this.Controls.Add(this.ThresholdTablesCombo);
 			this.Controls.Add(this.database_count);
 			this.Controls.Add(this.lblFileCount);
 			this.Controls.Add(this.btnClearFilter);
 			this.Controls.Add(this.lblFilterResults);
 			this.Controls.Add(this.txtFilterResults);
-			this.Controls.Add(this.rbSoundfingerprinting);
-			this.Controls.Add(this.rbScms);
 			this.Controls.Add(this.version);
 			this.Controls.Add(this.versionLabel);
-			this.Controls.Add(this.IgnoreFileLengthCheckBox);
 			this.Controls.Add(this.autoPlayCheckBox);
 			this.Controls.Add(this.ResetBtn);
 			this.Controls.Add(this.GoBtn);
 			this.Controls.Add(this.dataGridView1);
-			this.Controls.Add(this.DistanceTypeCombo);
 			this.Controls.Add(this.tabControl1);
 			this.Name = "FindSimilarClientForm";
 			this.Text = "Find Similar";
@@ -466,9 +414,9 @@
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
+
 		}
 		private System.Windows.Forms.CheckBox SearchAllFilesCheckbox;
-		private System.Windows.Forms.CheckBox LessAccurateCheckBox;
 		private System.Windows.Forms.ComboBox ThresholdTablesCombo;
 		private System.Windows.Forms.ToolStripMenuItem copyFileURLToolStripMenuItem;
 		private System.Windows.Forms.Label lblFileCount;
@@ -476,13 +424,10 @@
 		private System.Windows.Forms.Button btnClearFilter;
 		private System.Windows.Forms.Label lblFilterResults;
 		private System.Windows.Forms.TextBox txtFilterResults;
-		private System.Windows.Forms.RadioButton rbSoundfingerprinting;
-		private System.Windows.Forms.RadioButton rbScms;
 		private System.Windows.Forms.Button AudioFilePlayBtn;
 		private System.Windows.Forms.ToolStripMenuItem dumpDebugInfoToolStripMenuItem;
 		private System.Windows.Forms.Label version;
 		private System.Windows.Forms.Label versionLabel;
-		private System.Windows.Forms.CheckBox IgnoreFileLengthCheckBox;
 		private System.Windows.Forms.ToolStripMenuItem openFileLocationToolStripMenuItem;
 		private System.Windows.Forms.Label QueryStringLabel;
 		private System.Windows.Forms.TextBox QueryStringTextBox;
@@ -492,7 +437,6 @@
 		private System.Windows.Forms.Button GoBtn;
 		private System.Windows.Forms.ToolStripMenuItem findSimilarToolStripMenuItem;
 		private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
-		private System.Windows.Forms.ComboBox DistanceTypeCombo;
 		private System.Windows.Forms.DataGridView dataGridView1;
 		private System.Windows.Forms.OpenFileDialog openFileDialog;
 		private System.Windows.Forms.Label QueryIdLabel;
@@ -503,6 +447,7 @@
 		private System.Windows.Forms.TabPage tabIdSearch;
 		private System.Windows.Forms.TabPage tabFileSearch;
 		private System.Windows.Forms.TabControl tabControl1;
+		private System.Windows.Forms.CheckBox LessAccurateCheckBox;
 		
 
 	}
