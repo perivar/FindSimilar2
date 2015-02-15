@@ -1,6 +1,4 @@
-# FindSimilar2
-
-FindSimilar Audio Search Utility utilising Soundfingerprinting methods README
+# FindSimilar 2 - Audio Search Utility utilising Soundfingerprinting methods README
 =============================================================================
 Per Ivar Nerseth, 2015
 perivar@nerseth.com
