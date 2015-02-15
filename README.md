@@ -1,12 +1,13 @@
-# FindSimilar 2 - Audio Search Utility utilising Soundfingerprinting methods README
-=============================================================================
-Per Ivar Nerseth, 2015
-perivar@nerseth.com
+# FindSimilar 2
+## Audio Search Utility utilising Soundfingerprinting methods README
 
-FindSimilar. Version 2.0.1.
-Copyright (C) 2012-2015 Per Ivar Nerseth.
+>Per Ivar Nerseth, 2015
+>perivar@nerseth.com
 
-Usage: FindSimilar.exe <Arguments>
+*FindSimilar. Version 2.0.1.*
+**Copyright (C) 2012-2015 Per Ivar Nerseth.**
+
+`Usage: FindSimilar.exe <Arguments>
 
 Arguments:
         -scandir=<scan directory path and create audio fingerprints - ignore existing files>
@@ -18,7 +19,7 @@ Optional Arguments:
         -resetdb        <clean database, used together with scandir>
         -num=<number of matches to return when querying>
         -percentage=0.x <percentage above and below duration when querying>
-        -? or -help=show this usage help>
+        -? or -help=show this usage help>`
 
 Normal Steps are:
 1. Scan Directory
