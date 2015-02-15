@@ -363,8 +363,7 @@ namespace FindSimilar2
 		private static Dictionary<string, string> GetTagInfoFromFile(string filePath) {
 			
 			// Read TAGs using BASS
-			BassProxy bass = BassProxy.Instance;
-			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = bass.GetTagInfoFromFile(filePath);
+			Un4seen.Bass.AddOn.Tags.TAG_INFO tag_info = BassProxy.GetTagInfoFromFile(filePath);
 
 			var tags = new Dictionary<string, string>();
 			if (tag_info != null) {

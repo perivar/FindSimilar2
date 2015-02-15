@@ -82,7 +82,7 @@ namespace FindSimilar2
 
 				                 		// Try to use Un4Seen Bass to check duration
 				                 		BassProxy bass = BassProxy.Instance;
-				                 		double duration = bass.GetDurationInSeconds(fileInfo.FullName);
+				                 		double duration = BassProxy.GetDurationInSeconds(fileInfo.FullName);
 
 				                 		// check if we should skip files longer than x seconds
 				                 		if ( (skipDurationAboveSeconds > 0 && duration > 0 && duration < skipDurationAboveSeconds)

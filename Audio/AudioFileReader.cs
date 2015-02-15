@@ -31,7 +31,7 @@ namespace FindSimilar2.Audio
 			
 			// Try to use Un4Seen Bass
 			BassProxy bass = BassProxy.Instance;
-			double duration = bass.GetDurationInSeconds(fileIn);
+			double duration = BassProxy.GetDurationInSeconds(fileIn);
 			if (duration > 0) {
 				Dbg.WriteLine("Using BASS to decode the file ...");
 

@@ -94,7 +94,7 @@ namespace FindSimilar2.AudioProxies
 			// Call to avoid the freeware splash screen. Didn't see it, but maybe it will appear if the Forms are used :D
 			BassNet.Registration("gleb.godonoga@gmail.com", "2X155323152222");
 			
-			//Dummy calls made for loading the assemblies
+			// Dummy calls made for loading the assemblies
 			int bassVersion = Bass.BASS_GetVersion();
 			int bassMixVersion = BassMix.BASS_Mixer_GetVersion();
 			int bassfxVersion = BassFx.BASS_FX_GetVersion();
@@ -124,7 +124,7 @@ namespace FindSimilar2.AudioProxies
 					throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 				
 				#if DEBUG
-				BASS_INFO info = new BASS_INFO();
+				var info = new BASS_INFO();
 				Bass.BASS_GetInfo(info);
 				Debug.WriteLine(info.ToString());
 				
@@ -156,7 +156,7 @@ namespace FindSimilar2.AudioProxies
 					Debug.WriteLine("Type={0}, Name={1}, Exts={2}", f.ctype, f.name, f.exts);
 				}
 
-				Dictionary<int, string> loadedPlugIns = new Dictionary<int, string>();
+				var loadedPlugIns = new Dictionary<int, string>();
 				loadedPlugIns.Add(pluginFlac, "bassflac.dll");
 				loadedPlugIns.Add(pluginAAC, "bass_aac.dll");
 				loadedPlugIns.Add(pluginMPC, "bass_mpc.dll");
@@ -343,7 +343,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="startfreq"></param>
 		/// <param name="endfreq"></param>
 		/// <returns></returns>
-		public float[][] ReadSpectrum(string filename, int samplerate, int startmillisecond, int milliseconds, int overlap, int wdftsize, int logbins, int startfreq, int endfreq)
+		public static float[][] ReadSpectrum(string filename, int samplerate, int startmillisecond, int milliseconds, int overlap, int wdftsize, int logbins, int startfreq, int endfreq)
 		{
 			int totalmilliseconds = 0;
 			if (milliseconds <= 0) {
@@ -356,16 +356,16 @@ namespace FindSimilar2.AudioProxies
 			double logMax = Math.Log(endfreq, logbase);
 			double delta = (logMax - logMin)/logbins;
 			double accDelta = 0;
-			float[] freqs = new float[logbins + 1];
+			var freqs = new float[logbins + 1];
 			for (int i = 0; i <= logbins /*32 octaves*/; ++i)
 			{
 				freqs[i] = (float) Math.Pow(logbase, logMin + accDelta);
 				accDelta += delta; // accDelta = delta * i
 			}
 
-			List<float[]> data = new List<float[]>();
-			int[] streams = new int[wdftsize/overlap - 1];
-			int[] mixerstreams = new int[wdftsize/overlap - 1];
+			var data = new List<float[]>();
+			var streams = new int[wdftsize/overlap - 1];
+			var mixerstreams = new int[wdftsize/overlap - 1];
 			double sec = (double) overlap/samplerate;
 			for (int i = 0; i < wdftsize/overlap - 1; i++)
 			{
@@ -381,7 +381,7 @@ namespace FindSimilar2.AudioProxies
 
 			}
 
-			float[] buffer = new float[wdftsize/2];
+			var buffer = new float[wdftsize/2];
 			int size = 0;
 			int iter = 0;
 			while ((float) (size)/samplerate*1000 < totalmilliseconds)
@@ -389,7 +389,7 @@ namespace FindSimilar2.AudioProxies
 				int bytesRead = Bass.BASS_ChannelGetData(mixerstreams[iter%(wdftsize/overlap - 1)], buffer, (int) BASSData.BASS_DATA_FFT2048);
 				if (bytesRead == 0)
 					break;
-				float[] chunk = new float[logbins];
+				var chunk = new float[logbins];
 				for (int i = 0; i < logbins; i++)
 				{
 					int lowBound = (int) freqs[i];
@@ -439,7 +439,7 @@ namespace FindSimilar2.AudioProxies
 		///     tags.genre, and so on.
 		///   </code>
 		/// </remarks>
-		public TAG_INFO GetTagInfoFromFile(string filename)
+		public static TAG_INFO GetTagInfoFromFile(string filename)
 		{
 			return BassTags.BASS_TAG_GetFromFile(filename);
 		}
@@ -448,8 +448,9 @@ namespace FindSimilar2.AudioProxies
 		/// Return the duration in seconds
 		/// </summary>
 		/// <param name="filename">filename</param>
+		/// <param name="preScanMPStreams">pre scan mp3</param>
 		/// <returns>duration in seconds</returns>
-		public double GetDurationInSeconds(string filename, bool preScanMPStreams = false) {
+		public static double GetDurationInSeconds(string filename, bool preScanMPStreams = false) {
 			
 			double time = -1;
 			
@@ -481,17 +482,17 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="fileName">Initial file</param>
 		/// <param name="outFileName">Target file</param>
 		/// <param name="targetSampleRate">Target sample rate</param>
-		public void RecodeTheFile(string fileName, string outFileName, int targetSampleRate)
+		public static void RecodeTheFile(string fileName, string outFileName, int targetSampleRate)
 		{
 			int stream = Bass.BASS_StreamCreateFile(fileName, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
-			TAG_INFO tags = new TAG_INFO();
+			var tags = new TAG_INFO();
 			BassTags.BASS_TAG_GetFromFile(stream, tags);
 			int mixerStream = BassMix.BASS_Mixer_StreamCreate(targetSampleRate, 1, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
 			if (BassMix.BASS_Mixer_StreamAddChannel(mixerStream, stream, BASSFlag.BASS_MIXER_FILTER))
 			{
-				WaveWriter waveWriter = new WaveWriter(outFileName, mixerStream, true);
+				var waveWriter = new WaveWriter(outFileName, mixerStream, true);
 				const int length = 5512 * 10 * 4;
-				float[] buffer = new float[length];
+				var buffer = new float[length];
 				while (true)
 				{
 					int bytesRead = Bass.BASS_ChannelGetData(mixerStream, buffer, length);
@@ -511,8 +512,8 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="buffer">float array</param>
 		/// <param name="outFileName">filename</param>
 		/// <param name="targetSampleRate">target samplerate </param>
-		public void SaveFile(float[] buffer, string outFileName, int targetSampleRate) {
-			WaveWriter writer = new WaveWriter(outFileName, 1, targetSampleRate, 32, true);
+		public static void SaveFile(float[] buffer, string outFileName, int targetSampleRate) {
+			var writer = new WaveWriter(outFileName, 1, targetSampleRate, 32, true);
 			writer.Write(buffer, buffer.Length << 2);
 			writer.Close();
 		}
