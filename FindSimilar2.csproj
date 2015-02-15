@@ -165,6 +165,114 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
+    <None Include="NativeLibraries\Bass\bass.chm" />
+    <None Include="NativeLibraries\Bass\bass.dll" />
+    <None Include="NativeLibraries\Bass\Bass.Net.dll" />
+    <None Include="NativeLibraries\Bass\Bass.Net.xml" />
+    <None Include="NativeLibraries\Bass\bass.txt" />
+    <None Include="NativeLibraries\Bass\bassflac.chm" />
+    <None Include="NativeLibraries\Bass\bassflac.dll" />
+    <None Include="NativeLibraries\Bass\bassflac.txt" />
+    <None Include="NativeLibraries\Bass\bassmix.chm" />
+    <None Include="NativeLibraries\Bass\bassmix.dll" />
+    <None Include="NativeLibraries\Bass\bassmix.txt" />
+    <None Include="NativeLibraries\Bass\basswma.chm" />
+    <None Include="NativeLibraries\Bass\basswma.dll" />
+    <None Include="NativeLibraries\Bass\basswma.txt" />
+    <None Include="NativeLibraries\Bass\bass_aac.dll" />
+    <None Include="NativeLibraries\Bass\bass_aac.txt" />
+    <None Include="NativeLibraries\Bass\bass_ac3.dll" />
+    <None Include="NativeLibraries\Bass\bass_ac3.txt" />
+    <None Include="NativeLibraries\Bass\bass_ape.dll" />
+    <None Include="NativeLibraries\Bass\bass_ape.txt" />
+    <None Include="NativeLibraries\Bass\bass_fx.chm" />
+    <None Include="NativeLibraries\Bass\bass_fx.dll" />
+    <None Include="NativeLibraries\Bass\bass_fx.txt" />
+    <None Include="NativeLibraries\Bass\bass_mpc.dll" />
+    <None Include="NativeLibraries\Bass\bass_mpc.txt" />
+    <None Include="NativeLibraries\Bass\tags-readme.txt" />
+    <None Include="NativeLibraries\Bass\tags.dll" />
+    <Content Include="NativeLibraries\faad\faad.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NativeLibraries\ffmpeg\ffmpeg.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NativeLibraries\ffmpeg\ffplay.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NativeLibraries\lame\lame.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NativeLibraries\lame\lame_enc.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\libfftw\bench.exe" />
+    <None Include="NativeLibraries\libfftw\benchf.exe" />
+    <None Include="NativeLibraries\libfftw\benchl.exe" />
+    <None Include="NativeLibraries\libfftw\COPYING" />
+    <None Include="NativeLibraries\libfftw\COPYRIGHT" />
+    <None Include="NativeLibraries\libfftw\fftw-wisdom.exe" />
+    <None Include="NativeLibraries\libfftw\fftw3.f" />
+    <None Include="NativeLibraries\libfftw\fftw3.f03" />
+    <None Include="NativeLibraries\libfftw\fftw3.h" />
+    <None Include="NativeLibraries\libfftw\fftw3l.f03" />
+    <None Include="NativeLibraries\libfftw\fftw3q.f03" />
+    <None Include="NativeLibraries\libfftw\fftwf-wisdom.exe" />
+    <None Include="NativeLibraries\libfftw\fftwl-wisdom.exe" />
+    <None Include="NativeLibraries\libfftw\libfftw3-3.def" />
+    <None Include="NativeLibraries\libfftw\libfftw3-3.dll" />
+    <None Include="NativeLibraries\libfftw\libfftw3f-3.def" />
+    <None Include="NativeLibraries\libfftw\libfftw3f-3.dll" />
+    <None Include="NativeLibraries\libfftw\libfftw3l-3.def" />
+    <None Include="NativeLibraries\libfftw\libfftw3l-3.dll" />
+    <None Include="NativeLibraries\libfftw\NEWS" />
+    <None Include="NativeLibraries\libfftw\README" />
+    <None Include="NativeLibraries\libfftw\README-bench" />
+    <None Include="NativeLibraries\libfftw\README-WINDOWS" />
+    <None Include="NativeLibraries\mplayer\License.txt" />
+    <None Include="NativeLibraries\mplayer\mencoder.exe">
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </None>
+    <Content Include="NativeLibraries\mplayer\mplayer.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\mplayer\MPlayer.html" />
+    <None Include="NativeLibraries\mplayer\mplayer\config" />
+    <None Include="NativeLibraries\mplayer\Readme.txt" />
+    <Content Include="NativeLibraries\mplayer\vorbis.acm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\NAudio\license.txt" />
+    <None Include="NativeLibraries\NAudio\NAudio.dll" />
+    <None Include="NativeLibraries\NAudio\NAudio.WindowsMediaFormat.dll" />
+    <None Include="NativeLibraries\NAudio\NAudio.xml" />
+    <None Include="NativeLibraries\NAudio\readme.txt" />
+    <None Include="NativeLibraries\sox\batch-example.bat" />
+    <None Include="NativeLibraries\sox\ChangeLog.txt" />
+    <None Include="NativeLibraries\sox\LICENSE.GPL.txt" />
+    <None Include="NativeLibraries\sox\pthreadgc2.dll" />
+    <None Include="NativeLibraries\sox\README.txt" />
+    <None Include="NativeLibraries\sox\README.win32.txt" />
+    <Content Include="NativeLibraries\sox\sox.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\sox\sox.pdf" />
+    <None Include="NativeLibraries\sox\soxformat.pdf" />
+    <None Include="NativeLibraries\sox\soxi.pdf" />
+    <Content Include="NativeLibraries\sox\wget.exe">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NativeLibraries\sox\wget.ini">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <Content Include="NativeLibraries\sox\zlib1.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+    <None Include="NativeLibraries\SQLite\System.Data.SQLite.dll" />
+    <None Include="NativeLibraries\SQLite\System.Data.SQLite.Linq.dll" />
+    <None Include="NativeLibraries\ZedGraph\ZedGraph.dll" />
+    <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
     <None Include="README.md" />
     <None Include="Soundfingerprinting\perms.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -176,6 +284,18 @@
     <Folder Include="FindSimilarClient" />
     <Folder Include="Mirage" />
     <Folder Include="Audio" />
+    <Folder Include="NativeLibraries" />
+    <Folder Include="NativeLibraries\Bass" />
+    <Folder Include="NativeLibraries\faad" />
+    <Folder Include="NativeLibraries\ffmpeg" />
+    <Folder Include="NativeLibraries\lame" />
+    <Folder Include="NativeLibraries\libfftw" />
+    <Folder Include="NativeLibraries\mplayer" />
+    <Folder Include="NativeLibraries\mplayer\mplayer" />
+    <Folder Include="NativeLibraries\NAudio" />
+    <Folder Include="NativeLibraries\sox" />
+    <Folder Include="NativeLibraries\SQLite" />
+    <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="Soundfingerprinting" />
     <Folder Include="SoundPlayer" />
   </ItemGroup>

@@ -29,15 +29,15 @@ Optional Arguments:
 Normal Steps are:
 -----------------
 1. Scan Directory
-	`FindSimilar.exe -scandir="path/to/audiosamples/dir" -resetdb`
+   `FindSimilar.exe -scandir="path/to/audiosamples/dir" -resetdb`   
 
 2. Optional - Scan more directories
-	`FindSimilar.exe -scandir="path/to/another_audiosamples/dir"`
+   `FindSimilar.exe -scandir="path/to/another_audiosamples/dir"`   
 
 3. Use either command prompt utility
-	`FindSimilar.exe -match="path/to/audiosample.wav|mp3|flac|wma|etc"`
-	or
-	`FindSimilar.exe -matchid=4`
+   `FindSimilar.exe -match="path/to/audiosample.wav|mp3|flac|wma|etc"`   
+   or   
+   `FindSimilar.exe -matchid=4`   
 
 4. Or use GUI client
-	`FindSimilar.exe -gui`
+   `FindSimilar.exe -gui`   

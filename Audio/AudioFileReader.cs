@@ -76,10 +76,10 @@ namespace FindSimilar2.Audio
 					fileIn = Regex.Replace(fileIn, "%20", " ");
 					var t = new DbgTimer();
 					t.Start();
-					String curdir = System.Environment.CurrentDirectory;
+					
 					Dbg.WriteLine("Decoding: " + fileIn);
-					String tempFile = System.IO.Path.GetTempFileName();
-					String raw = tempFile + "_raw.wav";
+					
+					String raw = IOUtils.GetTempFilePathWithExtension("raw");
 					Dbg.WriteLine("Temporary raw file: " + raw);
 					
 					toraw.StartInfo.FileName = "./NativeLibraries\\sox\\sox.exe";
@@ -135,7 +135,7 @@ namespace FindSimilar2.Audio
 							floatBuffer[i] = BitConverter.ToSingle(bytesBuffer, i * sizeof(float)); // * 65536.0f;
 						}
 						
-					} catch (System.IO.FileNotFoundException) {
+					} catch (FileNotFoundException) {
 						floatBuffer = null;
 						
 					} finally {
@@ -143,7 +143,6 @@ namespace FindSimilar2.Audio
 							fs.Close();
 						try
 						{
-							File.Delete(tempFile);
 							File.Delete(raw);
 						}
 						catch (IOException io)
@@ -164,12 +163,13 @@ namespace FindSimilar2.Audio
 				using (var tosoxreadable = new Process())
 				{
 					fileIn = Regex.Replace(fileIn, "%20", " ");
+
 					var t = new DbgTimer();
 					t.Start();
-					String curdir = System.Environment.CurrentDirectory;
+					
 					Dbg.WriteLine("Decoding: " + fileIn);
-					String tempFile = System.IO.Path.GetTempFileName();
-					String soxreadablewav = tempFile + ".wav";
+					
+					String soxreadablewav = IOUtils.GetTempFilePathWithExtension("wav");
 					Dbg.WriteLine("Temporary wav file: " + soxreadablewav);
 					
 					tosoxreadable.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
@@ -200,7 +200,6 @@ namespace FindSimilar2.Audio
 						floatBuffer = DecodeUsingSox(soxreadablewav, srate, secondsToAnalyze);
 						try
 						{
-							File.Delete(tempFile);
 							File.Delete(soxreadablewav);
 						}
 						catch (IOException io)
@@ -220,12 +219,13 @@ namespace FindSimilar2.Audio
 				using (var towav = new Process())
 				{
 					fileIn = Regex.Replace(fileIn, "%20", " ");
+					
 					var t = new DbgTimer();
 					t.Start();
-					String curdir = System.Environment.CurrentDirectory;
+					
 					Dbg.WriteLine("Decoding: " + fileIn);
-					String tempFile = System.IO.Path.GetTempFileName();
-					String wav = tempFile + ".wav";
+					
+					String wav = IOUtils.GetTempFilePathWithExtension("wav");
 					Dbg.WriteLine("Temporary wav file: " + wav);
 					
 					towav.StartInfo.FileName = "./NativeLibraries\\mplayer\\mplayer.exe";
@@ -256,8 +256,7 @@ namespace FindSimilar2.Audio
 					float[] floatBuffer = riff.SoundData[0];
 					try
 					{
-						File.Delete(tempFile);
-						//File.Delete(wav);
+						File.Delete(wav);
 					}
 					catch (IOException io)
 					{
