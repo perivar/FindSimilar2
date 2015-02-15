@@ -6,6 +6,7 @@ using System.Linq;
 using System.Collections.Generic; // IEnumerable
 
 using System.Threading;
+using System.Threading.Tasks; // For Parallel
 
 using FindSimilar2.AudioProxies; // BassProxy
 using CommonUtils; // Arguments
