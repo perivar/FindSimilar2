@@ -46,6 +46,7 @@
 			this.findSimilarToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileLocationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.copyFileURLToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.openEditorToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.dumpDebugInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.GoBtn = new System.Windows.Forms.Button();
@@ -220,9 +221,10 @@
 			this.findSimilarToolStripMenuItem,
 			this.openFileLocationToolStripMenuItem,
 			this.copyFileURLToolStripMenuItem,
+			this.openEditorToolStripMenuItem,
 			this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(215, 92);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(215, 136);
 			// 
 			// findSimilarToolStripMenuItem
 			// 
@@ -244,6 +246,13 @@
 			this.copyFileURLToolStripMenuItem.Size = new System.Drawing.Size(214, 22);
 			this.copyFileURLToolStripMenuItem.Text = "Copy file URL to Clipboard";
 			this.copyFileURLToolStripMenuItem.Click += new System.EventHandler(this.CopyFileURLToolStripMenuItemClick);
+			// 
+			// openEditorToolStripMenuItem
+			// 
+			this.openEditorToolStripMenuItem.Name = "openEditorToolStripMenuItem";
+			this.openEditorToolStripMenuItem.Size = new System.Drawing.Size(214, 22);
+			this.openEditorToolStripMenuItem.Text = "Open Editor";
+			this.openEditorToolStripMenuItem.Click += new System.EventHandler(this.OpenEditorToolStripMenuItemClick);
 			// 
 			// dumpDebugInfoToolStripMenuItem
 			// 
@@ -448,6 +457,7 @@
 		private System.Windows.Forms.TabPage tabFileSearch;
 		private System.Windows.Forms.TabControl tabControl1;
 		private System.Windows.Forms.CheckBox LessAccurateCheckBox;
+		private System.Windows.Forms.ToolStripMenuItem openEditorToolStripMenuItem;
 		
 
 	}

@@ -246,6 +246,13 @@ namespace FindSimilar2
 			}
 		}
 
+		void OpenEditorToolStripMenuItemClick(object sender, System.EventArgs e)
+		{
+			if (selectedFilePath != null) {
+				new WaveEditor(selectedFilePath).Show();
+			}
+		}
+		
 		void DumpDebugInfoToolStripMenuItemClick(object sender, EventArgs e)
 		{
 			var fileInfo = new FileInfo(selectedFilePath);

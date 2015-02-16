@@ -44,7 +44,7 @@
     <CheckForOverflowUnderflow>False</CheckForOverflowUnderflow>
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects"</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -resetdb</StartArguments>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
@@ -87,20 +87,8 @@
     <Compile Include="..\AudioVSTToolbox\CommonUtils\BinaryFile.cs">
       <Link>BinaryFile.cs</Link>
     </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\ColorUtils.cs">
-      <Link>ColorUtils.cs</Link>
-    </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\FFT\LomontFFT.cs">
-      <Link>LomontFFT.cs</Link>
-    </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\ImageUtils.cs">
-      <Link>ImageUtils.cs</Link>
-    </Compile>
     <Compile Include="..\AudioVSTToolbox\CommonUtils\IOUtils.cs">
       <Link>IOUtils.cs</Link>
-    </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\MathUtils.cs">
-      <Link>MathUtils.cs</Link>
     </Compile>
     <Compile Include="..\AudioVSTToolbox\CommonUtils\StringUtils.cs">
       <Link>StringUtils.cs</Link>
@@ -122,6 +110,10 @@
       <DependentUpon>SplashSceenWaitingForm.cs</DependentUpon>
     </Compile>
     <Compile Include="FindSimilarClient\SplashScreen.cs" />
+    <Compile Include="FindSimilarClient\WaveEditor.cs" />
+    <Compile Include="FindSimilarClient\WaveEditor.Designer.cs">
+      <DependentUpon>WaveEditor.cs</DependentUpon>
+    </Compile>
     <Compile Include="Mirage\Dbg.cs" />
     <Compile Include="Mirage\WindowFunctions.cs" />
     <Compile Include="Program.cs" />
@@ -309,6 +301,15 @@
     <EmbeddedResource Include="FindSimilarClient\SplashSceenWaitingForm.resx">
       <DependentUpon>SplashSceenWaitingForm.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FindSimilarClient\WaveEditor.resx">
+      <DependentUpon>WaveEditor.cs</DependentUpon>
+    </EmbeddedResource>
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\WaveEditor\WaveEditor.csproj">
+      <Project>{21758F31-AE69-46D9-8042-6BEC38C1D105}</Project>
+      <Name>WaveEditor</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 
-using System.Windows;
 using System.Diagnostics;
 
 using Un4seen.Bass;
@@ -11,6 +10,10 @@ using Un4seen.Bass.AddOn.Tags;
 using Un4seen.Bass.Misc;
 
 using System.ComponentModel;
+
+using CommonUtils.Audio; // IWaveformPlayer
+
+using System.Windows.Forms; // Timer
 
 namespace FindSimilar2.AudioProxies
 {
@@ -38,35 +41,61 @@ namespace FindSimilar2.AudioProxies
 	/// ciumac.sergiu@gmail.com
 	/// Modified by perivar@nerseth.com
 	/// </remarks>
-	public class BassProxy : IAudio
+	public class BassProxy : IAudio, IWaveformPlayer
 	{
-		private static BassProxy instance;
+		#region fields
+		static BassProxy instance;
 		
-		private bool canPlay;
-		private bool canPause;
-		private bool canStop;
-		private bool isPlaying;
+		// Position variables
+		readonly Timer positionTimer = new Timer(); // TODO: Can only make this work with the Windows.Form.Timer ?!
+		double currentChannelPosition; // current position in playing stream in seconds
+		bool inChannelSet;
+		bool inChannelTimerUpdate;
 		
-		/// <summary>
-		///   Default sample rate used at initialization
-		/// </summary>
-		private const int DEFAULT_SAMPLE_RATE = 44100;
+		// Selection variables
+		private const int repeatThreshold = 10; // what is the minimum amount of ms that can be looped
+		TimeSpan repeatStart;
+		TimeSpan repeatStop;
+		bool inRepeatSet;
+		int repeatSyncId;
+		
+		// Waveform Generator variables
+		readonly BackgroundWorker waveformGenerateWorker = new BackgroundWorker();
+		string pendingWaveformPath;
+		
+		// Bass variables to track reaching end of stream or repeat
+		readonly SYNCPROC endTrackSyncProc;
+		readonly SYNCPROC repeatSyncProc;
+		
+		// IAudio variables
+		bool canPlay;
+		bool canPause;
+		bool canStop;
+		bool isPlaying;
 
 		/// <summary>
 		///   Shows whether the proxy is already disposed
 		/// </summary>
-		private bool _alreadyDisposed;
+		bool _alreadyDisposed;
 
 		/// <summary>
 		///   Currently playing stream
 		/// </summary>
-		private int _playingStream;
+		int _playingStream;
 
 		// Properties retrieved when using OpenFile
-		private int sampleRate;
-		private int bitsPerSample;
-		private int channels;
-		private double duration;
+		int sampleRate;
+		int bitsPerSample;
+		int channels;
+		double channelLength; // duration in seconds
+		
+		float[] waveformData;
+		#endregion
+		
+		/// <summary>
+		///   Default sample rate used at initialization
+		/// </summary>
+		const int DEFAULT_SAMPLE_RATE = 44100;
 
 		public int SampleRate
 		{
@@ -82,13 +111,9 @@ namespace FindSimilar2.AudioProxies
 		{
 			get { return channels; }
 		}
-
-		public double Duration
-		{
-			get { return duration; }
-		}
 		
 		#region Constructors
+		//private void InitBass()
 		static BassProxy()
 		{
 			// Call to avoid the freeware splash screen. Didn't see it, but maybe it will appear if the Forms are used :D
@@ -103,8 +128,7 @@ namespace FindSimilar2.AudioProxies
 			Debug.WriteLine("Bass Version: {0}, Mix Version: {1}, FX Version: {2}", bassVersion, bassMixVersion, bassfxVersion);
 			#endif
 			
-			//Set Sample Rate / MONO
-			//if (Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_SPEAKERS | BASSInit.BASS_DEVICE_MONO | BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero))
+			// Initialize Bass
 			if (Bass.BASS_Init(-1, DEFAULT_SAMPLE_RATE, BASSInit.BASS_DEVICE_DEFAULT, IntPtr.Zero))
 			{
 				// Load the plugins
@@ -187,6 +211,15 @@ namespace FindSimilar2.AudioProxies
 		/// </summary>
 		private BassProxy()
 		{
+			Initialize();
+			
+			// Set the methods that BASS will call when reaching end of stream or repeat
+			endTrackSyncProc = EndTrack;
+			repeatSyncProc = RepeatCallback;
+			
+			waveformGenerateWorker.DoWork += waveformGenerateWorker_DoWork;
+			waveformGenerateWorker.RunWorkerCompleted += waveformGenerateWorker_RunWorkerCompleted;
+			waveformGenerateWorker.WorkerSupportsCancellation = true;
 		}
 		#endregion
 
@@ -198,6 +231,47 @@ namespace FindSimilar2.AudioProxies
 				if (instance == null)
 					instance = new BassProxy();
 				return instance;
+			}
+		}
+		#endregion
+
+		#region Private Utility Methods
+		private void Initialize()
+		{
+			// Define the timer that checks the position while playing
+			positionTimer.Interval = 50; // 50 ms
+			positionTimer.Tick += OnTimedEvent;
+			
+			// The Timer is enabled/disabled in the IsPlaying method
+			IsPlaying = false;
+		}
+
+		private void SetRepeatRange(TimeSpan startTime, TimeSpan endTime)
+		{
+			if (repeatSyncId != 0)
+				Bass.BASS_ChannelRemoveSync(_playingStream, repeatSyncId);
+
+			if ((endTime - startTime) > TimeSpan.FromMilliseconds(repeatThreshold))
+			{
+				long channelLength = Bass.BASS_ChannelGetLength(_playingStream);
+				long endPosition = (long)((endTime.TotalSeconds / ChannelLength) * channelLength);
+				repeatSyncId = Bass.BASS_ChannelSetSync(_playingStream,
+				                                        BASSSync.BASS_SYNC_POS,
+				                                        (long)endPosition,
+				                                        repeatSyncProc,
+				                                        IntPtr.Zero);
+				ChannelPosition = SelectionBegin.TotalSeconds;
+			}
+			else
+				ClearRepeatRange();
+		}
+
+		private void ClearRepeatRange()
+		{
+			if (repeatSyncId != 0)
+			{
+				Bass.BASS_ChannelRemoveSync(_playingStream, repeatSyncId);
+				repeatSyncId = 0;
 			}
 		}
 		#endregion
@@ -325,6 +399,154 @@ namespace FindSimilar2.AudioProxies
 			Bass.BASS_StreamFree(mixerStream);
 			Bass.BASS_StreamFree(stream);
 			return data;
+		}
+		#endregion
+		
+		#region Event Handlers
+		void OnTimedEvent(object sender, EventArgs e)
+		{
+			if (_playingStream == 0)
+			{
+				ChannelPosition = 0;
+			}
+			else
+			{
+				inChannelTimerUpdate = true;
+				ChannelPosition = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetPosition(_playingStream, BASSMode.BASS_POS_BYTES));
+				inChannelTimerUpdate = false;
+			}
+		}
+		#endregion
+		
+		#region Waveform Generation
+		private class WaveformGenerationParams
+		{
+			public WaveformGenerationParams(string path)
+			{
+				Path = path;
+			}
+
+			public string Path { get; protected set; }
+		}
+		
+		private void GenerateWaveformData(string path)
+		{
+			if (waveformGenerateWorker.IsBusy)
+			{
+				pendingWaveformPath = path;
+				waveformGenerateWorker.CancelAsync();
+				return;
+			}
+
+			if (!waveformGenerateWorker.IsBusy)
+				waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(path));
+		}
+		
+		void waveformGenerateWorker_DoWork(object sender, DoWorkEventArgs e)
+		{
+			var waveformParams = e.Argument as WaveformGenerationParams;
+			WaveformData = ReadMonoFromFile(waveformParams.Path, sampleRate);
+			
+			// TODO: Since ther main work is happening outside of this method, this have no purpose
+			/*
+			if (waveformGenerateWorker.CancellationPending)
+			{
+				e.Cancel = true;
+				break; ;
+			}
+			 */
+		}
+
+		void waveformGenerateWorker_RunWorkerCompleted(object sender, AsyncCompletedEventArgs e)
+		{
+			if (e.Cancelled)
+			{
+				if (!waveformGenerateWorker.IsBusy)
+					waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(pendingWaveformPath));
+			}
+		}
+		#endregion
+
+		#region IWaveformPlayer Members
+		public double ChannelPosition {
+			get { return currentChannelPosition; }
+			set
+			{
+				if (!inChannelSet)
+				{
+					inChannelSet = true; // Avoid recursion
+					double oldValue = currentChannelPosition;
+					double position = Math.Max(0, Math.Min(value, ChannelLength));
+					
+					if (!inChannelTimerUpdate)
+						Bass.BASS_ChannelSetPosition(_playingStream, Bass.BASS_ChannelSeconds2Bytes(_playingStream, position));
+					
+					currentChannelPosition = position;
+					
+					if (oldValue != currentChannelPosition)
+						NotifyPropertyChanged("ChannelPosition");
+					
+					inChannelSet = false;
+				}
+			}
+		}
+		
+		public double ChannelLength {
+			get { return channelLength; }
+			protected set
+			{
+				double oldValue = channelLength;
+				channelLength = value;
+				if (oldValue != channelLength)
+					NotifyPropertyChanged("ChannelLength");
+			}
+		}
+		
+		public float[] WaveformData {
+			get { return waveformData; }
+			protected set
+			{
+				float[] oldValue = waveformData;
+				waveformData = value;
+				if (oldValue != waveformData)
+					NotifyPropertyChanged("WaveformData");
+			}
+		}
+		
+		public TimeSpan SelectionBegin {
+			get { return repeatStart; }
+			set
+			{
+				if (!inRepeatSet)
+				{
+					inRepeatSet = true;
+					TimeSpan oldValue = repeatStart;
+					repeatStart = value;
+					if (oldValue != repeatStart)
+						NotifyPropertyChanged("SelectionBegin");
+					
+					SetRepeatRange(value, SelectionEnd);
+					inRepeatSet = false;
+				}
+			}
+		}
+		
+		public TimeSpan SelectionEnd {
+			get { return repeatStop; }
+			set
+			{
+				if (!inChannelSet)
+				{
+					inRepeatSet = true;
+					TimeSpan oldValue = repeatStop;
+					repeatStop = value;
+					if (oldValue != repeatStop)
+						NotifyPropertyChanged("SelectionEnd");
+					
+					SetRepeatRange(SelectionBegin, value);
+					inRepeatSet = false;
+				}
+			}
 		}
 		#endregion
 
@@ -542,7 +764,7 @@ namespace FindSimilar2.AudioProxies
 				{
 					//release managed resources
 				}
-				// Bass.BASS_Free();
+				//Bass.BASS_Free();
 			}
 		}
 
@@ -558,12 +780,27 @@ namespace FindSimilar2.AudioProxies
 		#region Open methods
 		public void OpenFile(string path) {
 			
-			// BASS_STREAM_PRESCAN = Pre-scan the file for accurate seek points and length reading in MP3/MP2/MP1 files
-			// and chained OGG files (has no effect on normal OGG files). This can significantly increase the time taken to create the stream, particularly with a large file and/or slow storage media.
+			Stop();
+
+			if (_playingStream != 0)
+			{
+				ClearRepeatRange();
+				ChannelPosition = 0;
+				Bass.BASS_StreamFree(_playingStream);
+			}
+			
+			// Example:
+			// int stream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
+			
+			// BASS_STREAM_PRESCAN = Pre-scan the file for accurate seek points and length reading in
+			// MP3/MP2/MP1 files and chained OGG files (has no effect on normal OGG files).
+			// This can significantly increase the time taken to create the stream, particularly with a large file and/or slow storage media.
 			
 			// BASS_SAMPLE_FLOAT = Use 32-bit floating-point sample data.
-			//int stream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
+			
 			_playingStream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_DEFAULT);
+			
+			GenerateWaveformData(path);
 			
 			if (_playingStream != 0) {
 				var info = Bass.BASS_ChannelGetInfo(_playingStream);
@@ -572,7 +809,18 @@ namespace FindSimilar2.AudioProxies
 				bitsPerSample = info.Is8bit ? 8 : (info.Is32bit ? 32 : 16);
 				channels = info.chans;
 
-				duration = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetLength(_playingStream));
+				ChannelLength = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetLength(_playingStream, BASSMode.BASS_POS_BYTES));
+				
+				// Set the stream to call Stop() when it ends.
+				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
+				                                          BASSSync.BASS_SYNC_END,
+				                                          0,
+				                                          endTrackSyncProc,
+				                                          IntPtr.Zero);
+
+				if (syncHandle == 0)
+					throw new ArgumentException("Error establishing End Sync on file stream.", "path");
+				
 				CanPlay = true;
 			} else {
 				CanPlay = false;
@@ -609,14 +857,28 @@ namespace FindSimilar2.AudioProxies
 		
 		public void Stop()
 		{
-			if (_playingStream != 0) {
-				Bass.BASS_StreamFree(_playingStream);
-				//Bass.BASS_Stop();
+			ChannelPosition = SelectionBegin.TotalSeconds;
+			if (_playingStream != 0)
+			{
+				Bass.BASS_ChannelStop(_playingStream);
+				Bass.BASS_ChannelSetPosition(_playingStream, ChannelPosition);
 			}
 			IsPlaying = false;
 			CanStop = false;
 			CanPlay = true;
 			CanPause = false;
+		}
+		#endregion
+
+		#region Callbacks
+		private void EndTrack(int handle, int channel, int data, IntPtr user)
+		{
+			Stop();
+		}
+
+		private void RepeatCallback(int handle, int channel, int data, IntPtr user)
+		{
+			ChannelPosition = SelectionBegin.TotalSeconds;
 		}
 		#endregion
 		
@@ -666,6 +928,8 @@ namespace FindSimilar2.AudioProxies
 				isPlaying = value;
 				if (oldValue != isPlaying)
 					NotifyPropertyChanged("IsPlaying");
+
+				positionTimer.Enabled = value;
 			}
 		}
 		#endregion
@@ -681,6 +945,5 @@ namespace FindSimilar2.AudioProxies
 			}
 		}
 		#endregion
-		
 	}
 }
