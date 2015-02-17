@@ -1,25 +1,32 @@
 BASSWMA 2.4
-Copyright (c) 2002-2010 Un4seen Developments Ltd. All rights reserved.
+Copyright (c) 2002-2014 Un4seen Developments Ltd. All rights reserved.
 
 Files that you should have found in the BASSWMA package
 =======================================================
 BASSWMA.TXT   This file
-BASSWMA.DLL   The BASSWMA module
+BASSWMA.DLL   BASSWMA module
 BASSWMA.CHM   BASSWMA documentation
+X64\
+  BASSWMA.DLL     64-bit BASSWMA module
 C\            C/C++ API and examples...
   BASSWMA.H     BASSWMA C/C++ header file
   BASSWMA.LIB   BASSWMA import library
-  BASSWMA.DSW   Visual C++ workspace for examples
+  BASSWMA.DSW   Visual C++ 6 workspace for examples
+  BASSWMA.SLN   Visual C++ 2005 (and above) solution for examples
   MAKEFILE      Makefile for all examples
+  X64\
+    BASSWMA.LIB     64-bit BASSWMA import library
   NETRADIO\     Internet streaming example
     NETRADIO.C
     NETRADIO.RC
     NETRADIO.DSP
+    NETRADIO.VCPROJ
     MAKEFILE
   WMALIVE\      WMA live broadcast example
     WMALIVE.C
     WMALIVE.RC
     WMALIVE.DSP
+    WMALIVE.VCPROJ
     MAKEFILE
   BIN\          Precompiled examples
     NETRADIO.EXE
@@ -129,6 +136,16 @@ These are the major (and not so major) changes at each version stage.
 There are of course bug fixes and other little improvements made along
 the way too! To make upgrading simpler, all functions affected by a
 change to the BASSWMA interface are listed.
+
+2.4.5 - 20/10/2014
+------------------
+* Multi-channel encoding
+	BASS_WMA_EncodeOpen/File/Network/Publish
+* BASS channel encoding
+	BASS_WMA_ENCODE_SOURCE (BASS_WMA_EncodeOpen/File/Network/Publish flag)
+	BASS_WMA_EncodeGetRates
+* Asynchronous encoding
+	BASS_WMA_ENCODE_QUEUE (BASS_WMA_EncodeOpen/File flag)
 
 2.4.4 - 17/9/2010
 -----------------

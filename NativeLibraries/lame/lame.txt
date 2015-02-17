@@ -1,0 +1,5 @@
+LAME 3.99.5
+2014-05-22
+Bundle compiled with Intel Compiler 14.0.3.
+
+http://www.rarewares.org/mp3-lame-bundle.php

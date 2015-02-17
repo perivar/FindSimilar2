@@ -1,0 +1,3 @@
+oggenc2.87-1.3.4-generic
+
+http://www.rarewares.org/ogg-oggenc.php

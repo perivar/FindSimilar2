@@ -52,20 +52,20 @@ namespace FindSimilar2.AudioProxies
 		bool inChannelSet;
 		bool inChannelTimerUpdate;
 		
-		// Selection variables
-		private const int repeatThreshold = 10; // what is the minimum amount of ms that can be looped
-		TimeSpan repeatStart;
-		TimeSpan repeatStop;
-		bool inRepeatSet;
-		int repeatSyncId;
+		// Loop variables
+		private const int loopThreshold = 20; // what is the minimum amount of ms that can be looped
+		TimeSpan loopStart;
+		TimeSpan loopStop;
+		bool inLoopSet;
 		
 		// Waveform Generator variables
 		readonly BackgroundWorker waveformGenerateWorker = new BackgroundWorker();
 		string pendingWaveformPath;
 		
-		// Bass variables to track reaching end of stream or repeat
+		// Bass variables to track reaching end of stream or loop
 		readonly SYNCPROC endTrackSyncProc;
-		readonly SYNCPROC repeatSyncProc;
+		readonly SYNCPROC loopSyncProc;
+		int loopSyncId;
 		
 		// IAudio variables
 		bool canPlay;
@@ -215,7 +215,7 @@ namespace FindSimilar2.AudioProxies
 			
 			// Set the methods that BASS will call when reaching end of stream or repeat
 			endTrackSyncProc = EndTrack;
-			repeatSyncProc = RepeatCallback;
+			loopSyncProc = RepeatCallback;
 			
 			waveformGenerateWorker.DoWork += waveformGenerateWorker_DoWork;
 			waveformGenerateWorker.RunWorkerCompleted += waveformGenerateWorker_RunWorkerCompleted;
@@ -246,32 +246,35 @@ namespace FindSimilar2.AudioProxies
 			IsPlaying = false;
 		}
 
-		private void SetRepeatRange(TimeSpan startTime, TimeSpan endTime)
+		private void SetLoopRange(TimeSpan startTime, TimeSpan endTime)
 		{
-			if (repeatSyncId != 0)
-				Bass.BASS_ChannelRemoveSync(_playingStream, repeatSyncId);
+			if (loopSyncId != 0)
+				Bass.BASS_ChannelRemoveSync(_playingStream, loopSyncId);
 
-			if ((endTime - startTime) > TimeSpan.FromMilliseconds(repeatThreshold))
+			if ((endTime - startTime) > TimeSpan.FromMilliseconds(loopThreshold))
 			{
-				long channelLength = Bass.BASS_ChannelGetLength(_playingStream);
+				long channelLength = Bass.BASS_ChannelGetLength(_playingStream); // playback length in bytes
 				long endPosition = (long)((endTime.TotalSeconds / ChannelLength) * channelLength);
-				repeatSyncId = Bass.BASS_ChannelSetSync(_playingStream,
-				                                        BASSSync.BASS_SYNC_POS,
-				                                        (long)endPosition,
-				                                        repeatSyncProc,
-				                                        IntPtr.Zero);
+				
+				// For Sample Accurate Looping set mixtime POS sync at loop end
+				loopSyncId = Bass.BASS_ChannelSetSync(_playingStream,
+				                                      //BASSSync.BASS_SYNC_POS,
+				                                      BASSSync.BASS_SYNC_POS | BASSSync.BASS_SYNC_MIXTIME,
+				                                      (long)endPosition,
+				                                      loopSyncProc,
+				                                      IntPtr.Zero);
 				ChannelPosition = SelectionBegin.TotalSeconds;
 			}
 			else
-				ClearRepeatRange();
+				ClearLoopRange();
 		}
 
-		private void ClearRepeatRange()
+		private void ClearLoopRange()
 		{
-			if (repeatSyncId != 0)
+			if (loopSyncId != 0)
 			{
-				Bass.BASS_ChannelRemoveSync(_playingStream, repeatSyncId);
-				repeatSyncId = 0;
+				Bass.BASS_ChannelRemoveSync(_playingStream, loopSyncId);
+				loopSyncId = 0;
 			}
 		}
 		#endregion
@@ -475,11 +478,19 @@ namespace FindSimilar2.AudioProxies
 				if (!inChannelSet)
 				{
 					inChannelSet = true; // Avoid recursion
-					double oldValue = currentChannelPosition;
-					double position = Math.Max(0, Math.Min(value, ChannelLength));
 					
-					if (!inChannelTimerUpdate)
+					double oldValue = currentChannelPosition;
+					double position = Math.Max(0, Math.Min(value, ChannelLength)); // position in seconds
+					
+					if (!inChannelTimerUpdate) {
+						// Set position using time
 						Bass.BASS_ChannelSetPosition(_playingStream, Bass.BASS_ChannelSeconds2Bytes(_playingStream, position));
+						
+						// The loop calback also sets the ChannelPosition
+						// To enable sample accurate looping we should set position using samples
+						// seek to loop start
+						//Bass.BASS_ChannelSetPosition(_playingStream, loopstart, BASSMode.BASS_POS_BYTES)
+					}
 					
 					currentChannelPosition = position;
 					
@@ -514,37 +525,37 @@ namespace FindSimilar2.AudioProxies
 		}
 		
 		public TimeSpan SelectionBegin {
-			get { return repeatStart; }
+			get { return loopStart; }
 			set
 			{
-				if (!inRepeatSet)
+				if (!inLoopSet)
 				{
-					inRepeatSet = true;
-					TimeSpan oldValue = repeatStart;
-					repeatStart = value;
-					if (oldValue != repeatStart)
+					inLoopSet = true;
+					TimeSpan oldValue = loopStart;
+					loopStart = value;
+					if (oldValue != loopStart)
 						NotifyPropertyChanged("SelectionBegin");
 					
-					SetRepeatRange(value, SelectionEnd);
-					inRepeatSet = false;
+					SetLoopRange(value, SelectionEnd);
+					inLoopSet = false;
 				}
 			}
 		}
 		
 		public TimeSpan SelectionEnd {
-			get { return repeatStop; }
+			get { return loopStop; }
 			set
 			{
 				if (!inChannelSet)
 				{
-					inRepeatSet = true;
-					TimeSpan oldValue = repeatStop;
-					repeatStop = value;
-					if (oldValue != repeatStop)
+					inLoopSet = true;
+					TimeSpan oldValue = loopStop;
+					loopStop = value;
+					if (oldValue != loopStop)
 						NotifyPropertyChanged("SelectionEnd");
 					
-					SetRepeatRange(SelectionBegin, value);
-					inRepeatSet = false;
+					SetLoopRange(SelectionBegin, value);
+					inLoopSet = false;
 				}
 			}
 		}
@@ -784,7 +795,7 @@ namespace FindSimilar2.AudioProxies
 
 			if (_playingStream != 0)
 			{
-				ClearRepeatRange();
+				ClearLoopRange();
 				ChannelPosition = 0;
 				Bass.BASS_StreamFree(_playingStream);
 			}
@@ -861,6 +872,7 @@ namespace FindSimilar2.AudioProxies
 			if (_playingStream != 0)
 			{
 				Bass.BASS_ChannelStop(_playingStream);
+				// set playback position in seconds
 				Bass.BASS_ChannelSetPosition(_playingStream, ChannelPosition);
 			}
 			IsPlaying = false;

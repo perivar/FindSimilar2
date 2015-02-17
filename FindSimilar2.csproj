@@ -104,6 +104,10 @@
       <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
     </Compile>
     <Compile Include="FindSimilarClient\ISplashForm.cs" />
+    <Compile Include="FindSimilarClient\OpenstationForm.cs" />
+    <Compile Include="FindSimilarClient\OpenstationForm.Designer.cs">
+      <DependentUpon>OpenstationForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="FindSimilarClient\PictureBoxWithInterpolationMode.cs" />
     <Compile Include="FindSimilarClient\SplashSceenWaitingForm.cs" />
     <Compile Include="FindSimilarClient\SplashSceenWaitingForm.Designer.cs">
@@ -297,6 +301,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="FindSimilarClient\FindSimilarClientForm.resx">
       <DependentUpon>FindSimilarClientForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FindSimilarClient\OpenstationForm.resx">
+      <DependentUpon>OpenstationForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FindSimilarClient\SplashSceenWaitingForm.resx">
       <DependentUpon>SplashSceenWaitingForm.cs</DependentUpon>
