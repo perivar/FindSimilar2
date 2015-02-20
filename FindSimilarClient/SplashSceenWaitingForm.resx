@@ -299,7 +299,7 @@
         8cYBCDQ2lupVgh3DnZ/asRy6tOnTqGdGAAA7
 </value>
   </data>
-  <metadata name="worker.TrayLocation" type="System.Drawing.Point, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
+  <data name="worker.TrayLocation" type="System.Drawing.Point, System.Drawing">
     <value>17, 17</value>
-  </metadata>
+  </data>
 </root>
