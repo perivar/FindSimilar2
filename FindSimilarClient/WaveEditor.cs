@@ -39,7 +39,7 @@ namespace FindSimilar2
 			//customSpectrumAnalyzer1.RegisterSoundPlayer(soundEngine);
 			
 			if (File.Exists(fileName)) {
-				BassProxy.Instance.OpenFile(fileName);
+				soundEngine.OpenFile(fileName);
 			}
 		}
 		
@@ -98,5 +98,14 @@ namespace FindSimilar2
 			BassProxy.Instance.SelectionEnd = TimeSpan.FromMilliseconds(0);
 		}
 		
+		protected override void OnKeyDown(KeyEventArgs e)
+		{
+			base.OnKeyDown(e);
+			
+			if (e.KeyCode == Keys.Space) {
+				if (BassProxy.Instance.CanPlay)
+					BassProxy.Instance.Play();
+			}
+		}
 	}
 }
