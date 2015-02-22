@@ -17,6 +17,8 @@ using Soundfingerprinting.Hashing;
 using Soundfingerprinting.DbStorage;
 using Soundfingerprinting.DbStorage.Entities;
 
+using CommonUtils.Audio; // IAudio
+
 namespace FindSimilar2
 {
 	/// <summary>

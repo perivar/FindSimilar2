@@ -253,8 +253,10 @@ namespace FindSimilar2.AudioProxies
 
 			if ((endTime - startTime) > TimeSpan.FromMilliseconds(loopThreshold))
 			{
-				long channelLength = Bass.BASS_ChannelGetLength(_playingStream); // playback length in bytes
-				long endPosition = (long)((endTime.TotalSeconds / ChannelLength) * channelLength);
+				// length in bytes (float = 32 bits = 4 bytes)
+				long byteLength = Bass.BASS_ChannelGetLength(_playingStream);
+				
+				long endPosition = (long)((endTime.TotalSeconds / ChannelLength) * byteLength);
 				
 				// For Sample Accurate Looping set mixtime POS sync at loop end
 				loopSyncId = Bass.BASS_ChannelSetSync(_playingStream,
@@ -404,6 +406,57 @@ namespace FindSimilar2.AudioProxies
 			return data;
 		}
 		#endregion
+
+		/// <summary>
+		/// Read an audio file into a float array (32-bit floating-point sample data)
+		/// </summary>
+		/// <param name = "filename">Filename to be read</param>
+		/// <param name = "samplerate">Sample rate at which to perform reading</param>
+		/// <returns>Array with mono data</returns>
+		public static float[] ReadFromFile(string filename, int samplerate) {
+			
+			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
+			// Use BASS_ChannelGetData(Int32, IntPtr, Int32) to retrieve decoded sample data.
+			// The BASS_SAMPLE_SOFTWARE, BASS_SAMPLE_3D, BASS_SAMPLE_FX, BASS_STREAM_AUTOFREE and SPEAKER flags can not be used together with this flag.
+			
+			// BASS_SAMPLE_FLOAT	Produce 32-bit floating-point output.
+			// WDM drivers or the BASS_STREAM_DECODE flag are required to use this flag in Windows.
+
+			// Create channel stream
+			int mchan = Bass.BASS_StreamCreateFile(filename, 0, 0, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT);
+
+			// Creating a stream failed.
+			if (mchan == 0) {
+				// throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+				// failed creating the stream, something wrong with the audio file?
+				Console.Out.WriteLine("[E250] Error reading audio file: {0}. Faulty file? [{1}]", filename, Bass.BASS_ErrorGetCode().ToString());
+				return null;
+			}
+			
+			// length in bytes (float = 32 bits = 4 bytes)
+			long byteLength = Bass.BASS_ChannelGetLength(mchan);
+			
+			// define float array
+			var buffer = new float[byteLength/4];
+
+			// When requesting sample data, the number of bytes written to buffer will be returned (not necessarily the same as the number of bytes read when using the BASS_DATA_FLOAT flag).
+			// If an error occurs, -1 is returned, use BASS_ErrorGetCode to get the error code.
+			int bytesRead = Bass.BASS_ChannelGetData(mchan, buffer, (int)byteLength);
+			if (bytesRead == -1) {
+				Console.Out.WriteLine("[E260] Error reading audio file: {0}. Faulty file? [{1}]", filename, Bass.BASS_ErrorGetCode().ToString());
+				return null;
+			} else if (bytesRead == 0) {
+				Console.Out.WriteLine("[E270] Audio file returned 0 bytes: {0}. Faulty file? [{1}]", filename, Bass.BASS_ErrorGetCode().ToString());
+				return null;
+			} else {
+				// OK
+			}
+
+			// free resource
+			Bass.BASS_StreamFree(mchan);
+			
+			return buffer;
+		}
 		
 		#region Event Handlers
 		void OnTimedEvent(object sender, EventArgs e)
@@ -448,7 +501,8 @@ namespace FindSimilar2.AudioProxies
 		void waveformGenerateWorker_DoWork(object sender, DoWorkEventArgs e)
 		{
 			var waveformParams = e.Argument as WaveformGenerationParams;
-			WaveformData = ReadMonoFromFile(waveformParams.Path, sampleRate);
+			//WaveformData = ReadMonoFromFile(waveformParams.Path, sampleRate);
+			WaveformData = ReadFromFile(waveformParams.Path, sampleRate);
 			
 			// TODO: Since ther main work is happening outside of this method, this have no purpose
 			/*
@@ -611,7 +665,6 @@ namespace FindSimilar2.AudioProxies
 				if (!BassMix.BASS_Mixer_StreamAddChannel(mixerstreams[i], streams[i], BASSFlag.BASS_MIXER_FILTER))  {
 					throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 				}
-
 			}
 
 			var buffer = new float[wdftsize/2];
@@ -646,16 +699,16 @@ namespace FindSimilar2.AudioProxies
 		}
 
 		/// <summary>
-		///   Read data from file
+		/// Read mono data from file (32-bit floating-point sample data)
 		/// </summary>
 		/// <param name = "filename">Filename to be read</param>
 		/// <param name = "samplerate">Sample rate at which to perform reading</param>
-		/// <returns>Array with data</returns>
+		/// <returns>Array with mono data</returns>
 		public float[] ReadMonoFromFile(string filename, int samplerate)
 		{
 			return ReadMonoFromFile(filename, samplerate, 0, 0);
 		}
-
+		
 		/// <summary>
 		/// Get's tag info from file
 		/// </summary>
@@ -681,11 +734,11 @@ namespace FindSimilar2.AudioProxies
 		/// Return the duration in seconds
 		/// </summary>
 		/// <param name="filename">filename</param>
-		/// <param name="preScanMPStreams">pre scan mp3</param>
+		/// <param name="preScanMPStreams">whether to pre scan mp3</param>
 		/// <returns>duration in seconds</returns>
 		public static double GetDurationInSeconds(string filename, bool preScanMPStreams = false) {
 			
-			double time = -1;
+			double timeLength = -1;
 			
 			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
 			// Use BASS_ChannelGetData(Int32, IntPtr, Int32) to retrieve decoded sample data.
@@ -697,25 +750,25 @@ namespace FindSimilar2.AudioProxies
 			int stream = Bass.BASS_StreamCreateFile(filename, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | (preScanMPStreams ? BASSFlag.BASS_STREAM_PRESCAN : BASSFlag.BASS_DEFAULT));
 			if (stream != 0) {
 				
-				// length in bytes
-				long len = Bass.BASS_ChannelGetLength(stream, BASSMode.BASS_POS_BYTES);
+				// length in bytes (float = 32 bits = 4 bytes)
+				long byteLength = Bass.BASS_ChannelGetLength(stream, BASSMode.BASS_POS_BYTES);
 				
 				// the time length
-				time = Bass.BASS_ChannelBytes2Seconds(stream, len);
+				timeLength = Bass.BASS_ChannelBytes2Seconds(stream, byteLength);
 				
 				// free resource
 				Bass.BASS_StreamFree(stream);
 			}
-			return time;
+			return timeLength;
 		}
 		
 		/// <summary>
-		/// Recode the file
+		/// Recode a file
 		/// </summary>
 		/// <param name="fileName">Initial file</param>
 		/// <param name="outFileName">Target file</param>
 		/// <param name="targetSampleRate">Target sample rate</param>
-		public static void RecodeTheFile(string fileName, string outFileName, int targetSampleRate)
+		public static void RecodeFileMono(string fileName, string outFileName, int targetSampleRate)
 		{
 			int stream = Bass.BASS_StreamCreateFile(fileName, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);
 			var tags = new TAG_INFO();
@@ -820,6 +873,7 @@ namespace FindSimilar2.AudioProxies
 				bitsPerSample = info.Is8bit ? 8 : (info.Is32bit ? 32 : 16);
 				channels = info.chans;
 
+				// Get playing stream length in seconds
 				ChannelLength = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetLength(_playingStream, BASSMode.BASS_POS_BYTES));
 				
 				// Set the stream to call Stop() when it ends.

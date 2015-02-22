@@ -5,7 +5,7 @@
 using System;
 using System.ComponentModel;
 
-namespace FindSimilar2.AudioProxies
+namespace CommonUtils.Audio
 {
 	/// <summary>
 	///   Digital signal processing proxy
