@@ -59,7 +59,8 @@
 			this.btnStop.Location = new System.Drawing.Point(165, 3);
 			this.btnStop.Name = "btnStop";
 			this.btnStop.Size = new System.Drawing.Size(75, 23);
-			this.btnStop.TabIndex = 9;
+			this.btnStop.TabIndex = 3;
+			this.btnStop.TabStop = false;
 			this.btnStop.Text = "Stop";
 			this.btnStop.UseVisualStyleBackColor = true;
 			this.btnStop.Click += new System.EventHandler(this.BtnStopClick);
@@ -70,7 +71,8 @@
 			this.btnPlay.Location = new System.Drawing.Point(84, 3);
 			this.btnPlay.Name = "btnPlay";
 			this.btnPlay.Size = new System.Drawing.Size(75, 23);
-			this.btnPlay.TabIndex = 7;
+			this.btnPlay.TabIndex = 2;
+			this.btnPlay.TabStop = false;
 			this.btnPlay.Text = "Play";
 			this.btnPlay.UseVisualStyleBackColor = true;
 			this.btnPlay.Click += new System.EventHandler(this.BtnPlayClick);
@@ -81,7 +83,8 @@
 			this.btnBrowse.Location = new System.Drawing.Point(3, 3);
 			this.btnBrowse.Name = "btnBrowse";
 			this.btnBrowse.Size = new System.Drawing.Size(75, 23);
-			this.btnBrowse.TabIndex = 5;
+			this.btnBrowse.TabIndex = 1;
+			this.btnBrowse.TabStop = false;
 			this.btnBrowse.Text = "Browse";
 			this.btnBrowse.UseVisualStyleBackColor = true;
 			this.btnBrowse.Click += new System.EventHandler(this.BtnBrowseClick);
