@@ -88,6 +88,7 @@ namespace FindSimilar2.AudioProxies
 		int bitsPerSample;
 		int channels;
 		double channelLength; // duration in seconds
+		string filePath; // file path in openfile
 		
 		float[] waveformData;
 		#endregion
@@ -96,6 +97,12 @@ namespace FindSimilar2.AudioProxies
 		///   Default sample rate used at initialization
 		/// </summary>
 		const int DEFAULT_SAMPLE_RATE = 44100;
+
+		public string FilePath {
+			get {
+				return filePath;
+			}
+		}
 
 		public int SampleRate
 		{
@@ -112,8 +119,19 @@ namespace FindSimilar2.AudioProxies
 			get { return channels; }
 		}
 		
+		public int ChannelSampleLength {
+			get {
+				return TotalSampleLength / Channels;
+			}
+		}
+
+		public int TotalSampleLength {
+			get {
+				return waveformData != null ? waveformData.Length : -1;
+			}
+		}
+		
 		#region Constructors
-		//private void InitBass()
 		static BassProxy()
 		{
 			// Call to avoid the freeware splash screen. Didn't see it, but maybe it will appear if the Forms are used :D
@@ -886,6 +904,7 @@ namespace FindSimilar2.AudioProxies
 				if (syncHandle == 0)
 					throw new ArgumentException("Error establishing End Sync on file stream.", "path");
 				
+				filePath = path;
 				CanPlay = true;
 			} else {
 				CanPlay = false;

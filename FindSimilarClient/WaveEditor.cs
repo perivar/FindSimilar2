@@ -72,20 +72,21 @@ namespace FindSimilar2
 			if (openFileDialog.ShowDialog() == DialogResult.OK)
 			{
 				BassProxy.Instance.OpenFile(openFileDialog.FileName);
-				txtFilePath.Text = openFileDialog.FileName;
 			}
 		}
 		
 		void BtnPlayClick(object sender, EventArgs e)
 		{
-			if (BassProxy.Instance.CanPlay)
-				BassProxy.Instance.Play();
-		}
-		
-		void BtnPauseClick(object sender, EventArgs e)
-		{
-			if (BassProxy.Instance.CanPause)
-				BassProxy.Instance.Pause();
+			// Toggle Play
+			if (BassProxy.Instance.IsPlaying) {
+				if (BassProxy.Instance.CanPause) {
+					BassProxy.Instance.Pause();
+				}
+			} else {
+				if (BassProxy.Instance.CanPlay) {
+					BassProxy.Instance.Play();
+				}
+			}
 		}
 		
 		void BtnStopClick(object sender, EventArgs e)
@@ -102,9 +103,15 @@ namespace FindSimilar2
 		{
 			base.OnKeyDown(e);
 			
+			// Space toggles play
 			if (e.KeyCode == Keys.Space) {
-				if (BassProxy.Instance.CanPlay)
-					BassProxy.Instance.Play();
+				if (BassProxy.Instance.IsPlaying) {
+					if (BassProxy.Instance.CanPause)
+						BassProxy.Instance.Pause();
+				} else {
+					if (BassProxy.Instance.CanPlay)
+						BassProxy.Instance.Play();
+				}
 			}
 		}
 	}

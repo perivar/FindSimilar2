@@ -8,9 +8,7 @@
 		private System.ComponentModel.IContainer components = null;
 		private CommonUtils.GUI.CustomWaveViewer customWaveViewer1;
 		private System.Windows.Forms.Button btnStop;
-		private System.Windows.Forms.Button btnPause;
 		private System.Windows.Forms.Button btnPlay;
-		private System.Windows.Forms.TextBox txtFilePath;
 		private System.Windows.Forms.Button btnBrowse;
 		private System.Windows.Forms.OpenFileDialog openFileDialog;
 		private System.Windows.Forms.FlowLayoutPanel flowLayoutPanel1;
@@ -38,9 +36,7 @@
 		{
 			this.customWaveViewer1 = new CommonUtils.GUI.CustomWaveViewer();
 			this.btnStop = new System.Windows.Forms.Button();
-			this.btnPause = new System.Windows.Forms.Button();
 			this.btnPlay = new System.Windows.Forms.Button();
-			this.txtFilePath = new System.Windows.Forms.TextBox();
 			this.btnBrowse = new System.Windows.Forms.Button();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.flowLayoutPanel1 = new System.Windows.Forms.FlowLayoutPanel();
@@ -60,7 +56,7 @@
 			// btnStop
 			// 
 			this.btnStop.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnStop.Location = new System.Drawing.Point(512, 3);
+			this.btnStop.Location = new System.Drawing.Point(165, 3);
 			this.btnStop.Name = "btnStop";
 			this.btnStop.Size = new System.Drawing.Size(75, 23);
 			this.btnStop.TabIndex = 9;
@@ -68,21 +64,10 @@
 			this.btnStop.UseVisualStyleBackColor = true;
 			this.btnStop.Click += new System.EventHandler(this.BtnStopClick);
 			// 
-			// btnPause
-			// 
-			this.btnPause.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnPause.Location = new System.Drawing.Point(431, 3);
-			this.btnPause.Name = "btnPause";
-			this.btnPause.Size = new System.Drawing.Size(75, 23);
-			this.btnPause.TabIndex = 8;
-			this.btnPause.Text = "Pause";
-			this.btnPause.UseVisualStyleBackColor = true;
-			this.btnPause.Click += new System.EventHandler(this.BtnPauseClick);
-			// 
 			// btnPlay
 			// 
 			this.btnPlay.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnPlay.Location = new System.Drawing.Point(350, 3);
+			this.btnPlay.Location = new System.Drawing.Point(84, 3);
 			this.btnPlay.Name = "btnPlay";
 			this.btnPlay.Size = new System.Drawing.Size(75, 23);
 			this.btnPlay.TabIndex = 7;
@@ -90,18 +75,10 @@
 			this.btnPlay.UseVisualStyleBackColor = true;
 			this.btnPlay.Click += new System.EventHandler(this.BtnPlayClick);
 			// 
-			// txtFilePath
-			// 
-			this.txtFilePath.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.txtFilePath.Location = new System.Drawing.Point(3, 6);
-			this.txtFilePath.Name = "txtFilePath";
-			this.txtFilePath.Size = new System.Drawing.Size(260, 20);
-			this.txtFilePath.TabIndex = 6;
-			// 
 			// btnBrowse
 			// 
 			this.btnBrowse.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-			this.btnBrowse.Location = new System.Drawing.Point(269, 3);
+			this.btnBrowse.Location = new System.Drawing.Point(3, 3);
 			this.btnBrowse.Name = "btnBrowse";
 			this.btnBrowse.Size = new System.Drawing.Size(75, 23);
 			this.btnBrowse.TabIndex = 5;
@@ -115,10 +92,8 @@
 			// 
 			// flowLayoutPanel1
 			// 
-			this.flowLayoutPanel1.Controls.Add(this.txtFilePath);
 			this.flowLayoutPanel1.Controls.Add(this.btnBrowse);
 			this.flowLayoutPanel1.Controls.Add(this.btnPlay);
-			this.flowLayoutPanel1.Controls.Add(this.btnPause);
 			this.flowLayoutPanel1.Controls.Add(this.btnStop);
 			this.flowLayoutPanel1.Dock = System.Windows.Forms.DockStyle.Bottom;
 			this.flowLayoutPanel1.Location = new System.Drawing.Point(0, 283);
@@ -137,7 +112,6 @@
 			this.Name = "WaveEditor";
 			this.Text = "Wave Editor";
 			this.flowLayoutPanel1.ResumeLayout(false);
-			this.flowLayoutPanel1.PerformLayout();
 			this.ResumeLayout(false);
 
 		}
