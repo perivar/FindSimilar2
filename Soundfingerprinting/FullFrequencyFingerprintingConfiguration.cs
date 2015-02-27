@@ -19,7 +19,8 @@
 			// The closest power of 2 in 2's complement format: 8192 / 32000 = 256 ms
 			// 4096 / 32000 = 128 ms
 			//WindowSize = 8192;
-			WindowSize = 4096; // due to using this on many small samples, we need to reduce the window and overlap sizes
+			//WindowSize = 4096; // due to using this on many small samples, we need to reduce the window and overlap sizes
+			WindowSize = 2048;
 			
 			// 11,6 ms	is 	64/5512		or	512/44100	or 372/32000
 			// The closest power of 2 in 2's complement format: 512 / 32000 = 16 ms
