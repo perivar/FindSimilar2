@@ -1,4 +1,5 @@
 ﻿using System;
+using System.ComponentModel;
 using System.Windows.Forms;
 using System.IO;
 
@@ -12,13 +13,8 @@ namespace FindSimilar2
 	public partial class WaveEditor : Form
 	{
 		#region Private constants
-		private const int DefaultScale = 1;
 		private const int SliderSmallChange = 1;
 		private const int SliderLargeChange = 32;
-
-		public const int HorizontalMovementFast = 1024;
-		public const int HorizontalMovementNormal = 256;
-		public const int HorizontalMovementSlow = 1;
 		#endregion
 
 		public WaveEditor()
@@ -34,8 +30,17 @@ namespace FindSimilar2
 			customWaveViewer1.RegisterSoundPlayer(soundEngine);
 			//customSpectrumAnalyzer1.RegisterSoundPlayer(soundEngine);
 			
-			//hScrollBar.SmallChange = SliderSmallChange;
-			//hScrollBar.LargeChange = SliderLargeChange;
+			// Min Usually set to zero or one
+			// Max Set this to the number of rows in the file minus the number of rows displayed. If you want to scroll past the last row, then set it larger.
+			// Value Where the slider is located.
+			// LargeChange Amount Value is changed when the user clicks above or below the slider, or presses PgUp or PgDn keys.
+			// SmallChange Amount Value is changed when the user clicks an arrow or presses the up and down arrow keys.
+			
+			hScrollBar.SmallChange = SliderSmallChange;
+			hScrollBar.LargeChange = SliderLargeChange;
+			hScrollBar.Value = 0;
+			hScrollBar.Minimum = 0;
+			hScrollBar.Maximum= 0;
 		}
 
 		public WaveEditor(string fileName)
@@ -49,10 +54,12 @@ namespace FindSimilar2
 			soundEngine.PropertyChanged += BassProxy_PropertyChanged;
 			
 			customWaveViewer1.RegisterSoundPlayer(soundEngine);
+			customWaveViewer1.PropertyChanged += CustomWaveViewer_PropertyChanged;
 			//customSpectrumAnalyzer1.RegisterSoundPlayer(soundEngine);
 			
 			if (File.Exists(fileName)) {
 				OpenFile(fileName);
+				customWaveViewer1.FitToScreen(); // Force redraw
 			}
 		}
 
@@ -70,11 +77,13 @@ namespace FindSimilar2
 		void OpenFile(string fileName) {
 			BassProxy.Instance.OpenFile(fileName);
 			lblFilename.Text = Path.GetFileName(fileName);
-			lblBitdepth.Text = String.Format("{0} bit", BassProxy.Instance.BitsPerSample);
-			lblChannels.Text = String.Format("{0} channels", BassProxy.Instance.Channels);
+			lblBitdepth.Text = String.Format("{0} Bit", BassProxy.Instance.BitsPerSample);
+			lblChannels.Text = String.Format("{0} Ch.", BassProxy.Instance.Channels);
 			lblSamplerate.Text = String.Format("{0} Hz", BassProxy.Instance.SampleRate);
 			
-			lblDuration.Text = String.Format("{0} samples", BassProxy.Instance.ChannelSampleLength);
+			string durationTime = TimeSpan.FromSeconds(BassProxy.Instance.ChannelLength).ToString(@"hh\:mm\:ss\.fff");
+			int durationSamples = BassProxy.Instance.ChannelSampleLength;
+			lblDuration.Text = String.Format("{0} [{1}]", durationTime, durationSamples);
 		}
 		
 		void TogglePlay()
@@ -120,15 +129,15 @@ namespace FindSimilar2
 		#region Label Clicks (Zoom)
 		void LblZoomInClick(object sender, EventArgs e)
 		{
-			
+			customWaveViewer1.ZoomHorizontal(+1);
 		}
 		void LblZoomOutClick(object sender, EventArgs e)
 		{
-			
+			customWaveViewer1.ZoomHorizontal(-1);
 		}
 		void LblZoomSelectionClick(object sender, EventArgs e)
 		{
-			
+			customWaveViewer1.Zoom(0, customWaveViewer1.WaveformDrawingWidth);
 		}
 		void LblZoomInAmplitudeClick(object sender, EventArgs e)
 		{
@@ -147,14 +156,40 @@ namespace FindSimilar2
 			
 		}
 		#endregion
+
+		#region Change Labels Methods
+		private void ChangeChannelPosition(string channelPos) {
+			if(this.InvokeRequired)
+			{
+				this.Invoke(new Action(() => ChangeChannelPosition(channelPos)));
+			}
+			else
+			{
+				lblPlayPosition.Text = channelPos;
+			}
+		}
+
+		private void ChangeSelection(string selection) {
+			if(this.InvokeRequired)
+			{
+				this.Invoke(new Action(() => ChangeSelection(selection)));
+			}
+			else
+			{
+				lblSelection.Text = selection;
+			}
+		}
 		
-		void BassProxy_PropertyChanged(object sender, System.ComponentModel.PropertyChangedEventArgs e)
+		#endregion
+		
+		void BassProxy_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			BassProxy soundEngine = BassProxy.Instance;
 			switch (e.PropertyName)
 			{
 				case "ChannelPosition":
-					lblPlayPosition.Text = TimeSpan.FromSeconds(soundEngine.ChannelPosition).ToString();
+					string channelPos = TimeSpan.FromSeconds(soundEngine.ChannelPosition).ToString(@"hh\:mm\:ss\.fff");
+					ChangeChannelPosition(channelPos);
 					break;
 				case "IsPlaying":
 					Console.Out.WriteLine("IsPlaying");
@@ -167,6 +202,12 @@ namespace FindSimilar2
 					break;
 				case "SelectionEnd":
 					Console.Out.WriteLine("SelectionEnd");
+					double selBegin = soundEngine.SelectionBegin.TotalSeconds;
+					double selEnd = soundEngine.SelectionEnd.TotalSeconds;
+					string selectionBegin = TimeSpan.FromSeconds(selBegin).ToString(@"hh\:mm\:ss\.fff");
+					string selectionEnd = TimeSpan.FromSeconds(selEnd).ToString(@"hh\:mm\:ss\.fff");
+					string selectionDuration = TimeSpan.FromSeconds(selEnd-selBegin).ToString(@"hh\:mm\:ss\.fff");
+					ChangeSelection(string.Format("{0} - {1} ({2})", selectionBegin, selectionEnd, selectionDuration));
 					break;
 				case "WaveformData":
 					hScrollBar.Maximum = (int) (soundEngine.ChannelSampleLength - 1);
@@ -174,8 +215,12 @@ namespace FindSimilar2
 			}
 		}
 		
-		void HScrollBarValueChanged(object sender, EventArgs e)
-		{
+		void CustomWaveViewer_PropertyChanged(object sender, PropertyChangedEventArgs e) {
+			switch (e.PropertyName) {
+				case "SamplesPerPixel":
+					lblZoomRatio.Text = "" + customWaveViewer1.ZoomRatioString;
+					break;
+			}
 		}
 		
 		void HScrollBarScroll(object sender, ScrollEventArgs e)

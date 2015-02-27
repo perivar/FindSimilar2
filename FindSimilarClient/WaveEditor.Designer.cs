@@ -78,10 +78,16 @@
 			this.customWaveViewer1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
 			| System.Windows.Forms.AnchorStyles.Left) 
 			| System.Windows.Forms.AnchorStyles.Right)));
+			this.customWaveViewer1.EndZoomSamplePosition = 0;
 			this.customWaveViewer1.Location = new System.Drawing.Point(0, 28);
 			this.customWaveViewer1.Name = "customWaveViewer1";
+			this.customWaveViewer1.PreviousStartZoomSamplePosition = 0;
+			this.customWaveViewer1.SamplesPerPixel = 128F;
 			this.customWaveViewer1.Size = new System.Drawing.Size(654, 229);
+			this.customWaveViewer1.StartZoomSamplePosition = 0;
 			this.customWaveViewer1.TabIndex = 0;
+			this.customWaveViewer1.WaveformDrawingHeight = 199;
+			this.customWaveViewer1.WaveformDrawingWidth = 594;
 			// 
 			// openFileDialog
 			// 
@@ -185,7 +191,6 @@
 			this.hScrollBar.Size = new System.Drawing.Size(654, 16);
 			this.hScrollBar.TabIndex = 12;
 			this.hScrollBar.Scroll += new System.Windows.Forms.ScrollEventHandler(this.HScrollBarScroll);
-			this.hScrollBar.ValueChanged += new System.EventHandler(this.HScrollBarValueChanged);
 			// 
 			// flowLayoutPanel2
 			// 
@@ -206,17 +211,17 @@
 			// lblZoomRatio
 			// 
 			this.lblZoomRatio.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblZoomRatio.Location = new System.Drawing.Point(617, 0);
+			this.lblZoomRatio.Location = new System.Drawing.Point(595, 0);
 			this.lblZoomRatio.Name = "lblZoomRatio";
 			this.lblZoomRatio.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.lblZoomRatio.Size = new System.Drawing.Size(34, 20);
+			this.lblZoomRatio.Size = new System.Drawing.Size(56, 20);
 			this.lblZoomRatio.TabIndex = 6;
 			this.lblZoomRatio.Text = "Ratio";
 			// 
 			// lblPlayPosition
 			// 
 			this.lblPlayPosition.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblPlayPosition.Location = new System.Drawing.Point(540, 0);
+			this.lblPlayPosition.Location = new System.Drawing.Point(518, 0);
 			this.lblPlayPosition.Name = "lblPlayPosition";
 			this.lblPlayPosition.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.lblPlayPosition.Size = new System.Drawing.Size(71, 20);
@@ -226,27 +231,27 @@
 			// lblDuration
 			// 
 			this.lblDuration.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblDuration.Location = new System.Drawing.Point(435, 0);
+			this.lblDuration.Location = new System.Drawing.Point(400, 0);
 			this.lblDuration.Name = "lblDuration";
 			this.lblDuration.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.lblDuration.Size = new System.Drawing.Size(99, 20);
+			this.lblDuration.Size = new System.Drawing.Size(112, 20);
 			this.lblDuration.TabIndex = 4;
 			this.lblDuration.Text = "Duration";
 			// 
 			// lblSelection
 			// 
 			this.lblSelection.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblSelection.Location = new System.Drawing.Point(303, 0);
+			this.lblSelection.Location = new System.Drawing.Point(163, 0);
 			this.lblSelection.Name = "lblSelection";
 			this.lblSelection.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.lblSelection.Size = new System.Drawing.Size(126, 20);
+			this.lblSelection.Size = new System.Drawing.Size(231, 20);
 			this.lblSelection.TabIndex = 3;
 			this.lblSelection.Text = "Selection";
 			// 
 			// lblSamplerate
 			// 
 			this.lblSamplerate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblSamplerate.Location = new System.Drawing.Point(237, 0);
+			this.lblSamplerate.Location = new System.Drawing.Point(97, 0);
 			this.lblSamplerate.Name = "lblSamplerate";
 			this.lblSamplerate.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.lblSamplerate.Size = new System.Drawing.Size(60, 20);
@@ -256,17 +261,17 @@
 			// lblChannels
 			// 
 			this.lblChannels.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblChannels.Location = new System.Drawing.Point(170, 0);
+			this.lblChannels.Location = new System.Drawing.Point(46, 0);
 			this.lblChannels.Name = "lblChannels";
 			this.lblChannels.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.lblChannels.Size = new System.Drawing.Size(61, 20);
+			this.lblChannels.Size = new System.Drawing.Size(45, 20);
 			this.lblChannels.TabIndex = 1;
 			this.lblChannels.Text = "Channels";
 			// 
 			// lblBitdepth
 			// 
 			this.lblBitdepth.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblBitdepth.Location = new System.Drawing.Point(127, 0);
+			this.lblBitdepth.Location = new System.Drawing.Point(3, 0);
 			this.lblBitdepth.Name = "lblBitdepth";
 			this.lblBitdepth.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.lblBitdepth.Size = new System.Drawing.Size(37, 20);

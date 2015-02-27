@@ -261,6 +261,7 @@ namespace FindSimilar2
 				Application.EnableVisualStyles();
 				Application.SetCompatibleTextRenderingDefault(false);
 				Application.Run(new FindSimilarClientForm());
+				//Application.Run(new WaveEditor());
 			}
 			
 			private static void FindSoundfingerprinting(FileInfo fi, Repository repository, int numToTake) {

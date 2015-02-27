@@ -121,7 +121,7 @@ namespace FindSimilar2.AudioProxies
 		
 		public int ChannelSampleLength {
 			get {
-				return TotalSampleLength / Channels;
+				return TotalSampleLength != -1 && Channels != 0 ? TotalSampleLength / Channels : -1;
 			}
 		}
 
