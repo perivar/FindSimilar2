@@ -17,6 +17,7 @@ namespace FindSimilar2
 		private const int SliderLargeChange = 32;
 		#endregion
 
+		#region Constructors
 		public WaveEditor()
 		{
 			//
@@ -24,23 +25,13 @@ namespace FindSimilar2
 			//
 			InitializeComponent();
 			
+			InitializeScrollbar();
+
 			BassProxy soundEngine = BassProxy.Instance;
 			soundEngine.PropertyChanged += BassProxy_PropertyChanged;
 			
 			customWaveViewer1.RegisterSoundPlayer(soundEngine);
 			//customSpectrumAnalyzer1.RegisterSoundPlayer(soundEngine);
-			
-			// Min Usually set to zero or one
-			// Max Set this to the number of rows in the file minus the number of rows displayed. If you want to scroll past the last row, then set it larger.
-			// Value Where the slider is located.
-			// LargeChange Amount Value is changed when the user clicks above or below the slider, or presses PgUp or PgDn keys.
-			// SmallChange Amount Value is changed when the user clicks an arrow or presses the up and down arrow keys.
-			
-			hScrollBar.SmallChange = SliderSmallChange;
-			hScrollBar.LargeChange = SliderLargeChange;
-			hScrollBar.Value = 0;
-			hScrollBar.Minimum = 0;
-			hScrollBar.Maximum= 0;
 		}
 
 		public WaveEditor(string fileName)
@@ -50,6 +41,8 @@ namespace FindSimilar2
 			//
 			InitializeComponent();
 			
+			InitializeScrollbar();
+
 			BassProxy soundEngine = BassProxy.Instance;
 			soundEngine.PropertyChanged += BassProxy_PropertyChanged;
 			
@@ -62,6 +55,7 @@ namespace FindSimilar2
 				customWaveViewer1.FitToScreen(); // Force redraw
 			}
 		}
+		#endregion
 
 		#region Play and Open file methods
 		void OpenFileDialog()
@@ -111,6 +105,7 @@ namespace FindSimilar2
 		}
 		#endregion
 		
+		#region Key and Mouse handlers
 		protected override void OnKeyDown(KeyEventArgs e)
 		{
 			base.OnKeyDown(e);
@@ -125,6 +120,7 @@ namespace FindSimilar2
 				customWaveViewer1.SelectAll();
 			}
 		}
+		#endregion
 		
 		#region Label Clicks (Zoom)
 		void LblZoomInClick(object sender, EventArgs e)
@@ -180,8 +176,20 @@ namespace FindSimilar2
 			}
 		}
 		
+		private void ChangeZoomRatio(string zoomRatio) {
+			if(this.InvokeRequired)
+			{
+				this.Invoke(new Action(() => ChangeZoomRatio(zoomRatio)));
+			}
+			else
+			{
+				lblZoomRatio.Text = zoomRatio;
+			}
+		}
+		
 		#endregion
 		
+		#region PropertyChanged
 		void BassProxy_PropertyChanged(object sender, PropertyChangedEventArgs e)
 		{
 			BassProxy soundEngine = BassProxy.Instance;
@@ -192,16 +200,12 @@ namespace FindSimilar2
 					ChangeChannelPosition(channelPos);
 					break;
 				case "IsPlaying":
-					Console.Out.WriteLine("IsPlaying");
 					break;
 				case "ChannelLength":
-					Console.Out.WriteLine("ChannelLength");
 					break;
 				case "SelectionBegin":
-					Console.Out.WriteLine("SelectionBegin");
 					break;
 				case "SelectionEnd":
-					Console.Out.WriteLine("SelectionEnd");
 					double selBegin = soundEngine.SelectionBegin.TotalSeconds;
 					double selEnd = soundEngine.SelectionEnd.TotalSeconds;
 					string selectionBegin = TimeSpan.FromSeconds(selBegin).ToString(@"hh\:mm\:ss\.fff");
@@ -210,27 +214,72 @@ namespace FindSimilar2
 					ChangeSelection(string.Format("{0} - {1} ({2})", selectionBegin, selectionEnd, selectionDuration));
 					break;
 				case "WaveformData":
-					hScrollBar.Maximum = (int) (soundEngine.ChannelSampleLength - 1);
+					//hScrollBar.Maximum = (int) (soundEngine.ChannelSampleLength - 1);
 					break;
 			}
 		}
 		
 		void CustomWaveViewer_PropertyChanged(object sender, PropertyChangedEventArgs e) {
 			switch (e.PropertyName) {
-				case "SamplesPerPixel":
-					lblZoomRatio.Text = "" + customWaveViewer1.ZoomRatioString;
+				case "ZoomRatioString":
+					ChangeZoomRatio(customWaveViewer1.ZoomRatioString);
+					UpdateScrollbar();
 					break;
+			}
+		}
+		#endregion
+		
+		#region Scrollbar
+		private void InitializeScrollbar() {
+			// Min Usually set to zero or one
+			// Max Set this to the number of rows in the file minus the number of rows displayed. If you want to scroll past the last row, then set it larger.
+			// Value Where the slider is located.
+			// LargeChange Amount Value is changed when the user clicks above or below the slider, or presses PgUp or PgDn keys.
+			// SmallChange Amount Value is changed when the user clicks an arrow or presses the up and down arrow keys.
+			
+			hScrollBar.SmallChange = SliderSmallChange;
+			hScrollBar.LargeChange = SliderLargeChange;
+			hScrollBar.Value = 0;
+			hScrollBar.Minimum = 0;
+			hScrollBar.Maximum= 0;
+		}
+		
+		private void UpdateScrollbar() {
+
+			if (customWaveViewer1.EndZoomSamplePosition > 0) {
+				
+				// calculate the range
+				int rangeInSamples = customWaveViewer1.EndZoomSamplePosition - customWaveViewer1.StartZoomSamplePosition;
+				int channelSampleLength = BassProxy.Instance.ChannelSampleLength;
+				int delta = rangeInSamples / 20;
+				
+				double ratio = channelSampleLength / rangeInSamples;
+				
+				hScrollBar.SmallChange = SliderSmallChange;
+				hScrollBar.LargeChange = SliderLargeChange;
+				hScrollBar.Value = customWaveViewer1.StartZoomSamplePosition;
+				hScrollBar.Minimum = 0;
+				hScrollBar.Maximum = channelSampleLength;
 			}
 		}
 		
 		void HScrollBarScroll(object sender, ScrollEventArgs e)
 		{
+			int channelSampleLength = BassProxy.Instance.ChannelSampleLength;
+			int startPos = customWaveViewer1.StartZoomSamplePosition;
+			int endPos = customWaveViewer1.EndZoomSamplePosition;
+			endPos = endPos - (startPos-e.NewValue);
+			startPos = e.NewValue;
+			
 			if (e.NewValue > e.OldValue) {
-				customWaveViewer1.ScrollRight();
+				//customWaveViewer1.ScrollRight();
+				customWaveViewer1.ScrollTime(true, channelSampleLength, startPos, endPos);
 			} else {
-				customWaveViewer1.ScrollLeft();
+				//customWaveViewer1.ScrollLeft();
+				customWaveViewer1.ScrollTime(false, channelSampleLength, startPos, endPos);
 			}
 		}
+		#endregion
 		
 	}
 }
