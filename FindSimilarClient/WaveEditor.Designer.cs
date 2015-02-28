@@ -231,27 +231,27 @@
 			// lblDuration
 			// 
 			this.lblDuration.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblDuration.Location = new System.Drawing.Point(400, 0);
+			this.lblDuration.Location = new System.Drawing.Point(394, 0);
 			this.lblDuration.Name = "lblDuration";
 			this.lblDuration.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.lblDuration.Size = new System.Drawing.Size(112, 20);
+			this.lblDuration.Size = new System.Drawing.Size(118, 20);
 			this.lblDuration.TabIndex = 4;
 			this.lblDuration.Text = "Duration";
 			// 
 			// lblSelection
 			// 
 			this.lblSelection.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblSelection.Location = new System.Drawing.Point(163, 0);
+			this.lblSelection.Location = new System.Drawing.Point(165, 0);
 			this.lblSelection.Name = "lblSelection";
 			this.lblSelection.RightToLeft = System.Windows.Forms.RightToLeft.No;
-			this.lblSelection.Size = new System.Drawing.Size(231, 20);
+			this.lblSelection.Size = new System.Drawing.Size(223, 20);
 			this.lblSelection.TabIndex = 3;
 			this.lblSelection.Text = "Selection";
 			// 
 			// lblSamplerate
 			// 
 			this.lblSamplerate.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblSamplerate.Location = new System.Drawing.Point(97, 0);
+			this.lblSamplerate.Location = new System.Drawing.Point(99, 0);
 			this.lblSamplerate.Name = "lblSamplerate";
 			this.lblSamplerate.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.lblSamplerate.Size = new System.Drawing.Size(60, 20);
@@ -261,7 +261,7 @@
 			// lblChannels
 			// 
 			this.lblChannels.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblChannels.Location = new System.Drawing.Point(46, 0);
+			this.lblChannels.Location = new System.Drawing.Point(48, 0);
 			this.lblChannels.Name = "lblChannels";
 			this.lblChannels.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.lblChannels.Size = new System.Drawing.Size(45, 20);
@@ -271,7 +271,7 @@
 			// lblBitdepth
 			// 
 			this.lblBitdepth.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-			this.lblBitdepth.Location = new System.Drawing.Point(3, 0);
+			this.lblBitdepth.Location = new System.Drawing.Point(5, 0);
 			this.lblBitdepth.Name = "lblBitdepth";
 			this.lblBitdepth.RightToLeft = System.Windows.Forms.RightToLeft.No;
 			this.lblBitdepth.Size = new System.Drawing.Size(37, 20);

@@ -221,6 +221,9 @@ namespace FindSimilar2
 		
 		void CustomWaveViewer_PropertyChanged(object sender, PropertyChangedEventArgs e) {
 			switch (e.PropertyName) {
+				case "StartZoomSamplePosition":
+					hScrollBar.Value = customWaveViewer1.StartZoomSamplePosition;
+					break;
 				case "ZoomRatioString":
 					ChangeZoomRatio(customWaveViewer1.ZoomRatioString);
 					UpdateScrollbar();
@@ -247,36 +250,36 @@ namespace FindSimilar2
 		private void UpdateScrollbar() {
 
 			if (customWaveViewer1.EndZoomSamplePosition > 0) {
+				// 1:64 = thumb: total scrollbar width divided by 2
+				// 1:32 = thumb: total scrollbar width divided by 4
+				// 1:16 = thumb: total scrollbar width divided by 8
+				// 1:8 = thumb: total scrollbar width divided by 16
+				// 1:4 = thumb: total scrollbar width divided by 32
+				// 1:2 = thumb: total scrollbar width divided by 64
+				// 1:2 = thumb: total scrollbar width divided by 64
 				
-				// calculate the range
-				int rangeInSamples = customWaveViewer1.EndZoomSamplePosition - customWaveViewer1.StartZoomSamplePosition;
+				int startPos = customWaveViewer1.StartZoomSamplePosition;
+				int endPos = customWaveViewer1.EndZoomSamplePosition;
+				int rangeInSamples = Math.Abs(endPos - startPos);
 				int channelSampleLength = BassProxy.Instance.ChannelSampleLength;
-				int delta = rangeInSamples / 20;
+				double ratio = (channelSampleLength / rangeInSamples);
 				
-				double ratio = channelSampleLength / rangeInSamples;
-				
-				hScrollBar.SmallChange = SliderSmallChange;
-				hScrollBar.LargeChange = SliderLargeChange;
-				hScrollBar.Value = customWaveViewer1.StartZoomSamplePosition;
 				hScrollBar.Minimum = 0;
 				hScrollBar.Maximum = channelSampleLength;
+				hScrollBar.LargeChange = (int) (hScrollBar.Maximum / ratio);
+				hScrollBar.SmallChange = (int) (hScrollBar.LargeChange / SliderLargeChange);
+				hScrollBar.Value = startPos;
 			}
 		}
 		
 		void HScrollBarScroll(object sender, ScrollEventArgs e)
 		{
-			int channelSampleLength = BassProxy.Instance.ChannelSampleLength;
-			int startPos = customWaveViewer1.StartZoomSamplePosition;
-			int endPos = customWaveViewer1.EndZoomSamplePosition;
-			endPos = endPos - (startPos-e.NewValue);
-			startPos = e.NewValue;
-			
 			if (e.NewValue > e.OldValue) {
-				//customWaveViewer1.ScrollRight();
-				customWaveViewer1.ScrollTime(true, channelSampleLength, startPos, endPos);
+				int newStartPos = e.NewValue;
+				customWaveViewer1.ScrollTime(true, newStartPos);
 			} else {
-				//customWaveViewer1.ScrollLeft();
-				customWaveViewer1.ScrollTime(false, channelSampleLength, startPos, endPos);
+				int newStartPos = e.NewValue;
+				customWaveViewer1.ScrollTime(false, newStartPos);
 			}
 		}
 		#endregion
