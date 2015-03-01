@@ -8,7 +8,6 @@ using System.Linq;
 
 using System.Diagnostics;
 
-//using FindSimilar2.Audio; // AudioFileReader
 using FindSimilar2.AudioProxies; // BassProxy
 
 using Soundfingerprinting;
@@ -29,7 +28,7 @@ namespace FindSimilar2
 		private const int DEFAULT_NUM_TO_TAKE = 200;
 		
 		// Instance Variables
-		private IAudio player = null;
+		private IWaveformPlayer player = null;
 		private string selectedFilePath = null;
 		
 		// Soundfingerprinting
@@ -251,7 +250,10 @@ namespace FindSimilar2
 		void OpenEditorToolStripMenuItemClick(object sender, System.EventArgs e)
 		{
 			if (selectedFilePath != null) {
-				new WaveEditor(selectedFilePath).Show();
+				var editor = new WaveEditor.WaveEditor();
+				editor.RegisterSoundPlayer(player);
+				editor.OpenFileAndRedraw(selectedFilePath);
+				editor.Show();
 			}
 		}
 		

@@ -41,7 +41,7 @@ namespace FindSimilar2.AudioProxies
 	/// ciumac.sergiu@gmail.com
 	/// Modified by perivar@nerseth.com
 	/// </remarks>
-	public class BassProxy : IAudio, IWaveformPlayer
+	public class BassProxy : IWaveformPlayer
 	{
 		#region fields
 		static BassProxy instance;
