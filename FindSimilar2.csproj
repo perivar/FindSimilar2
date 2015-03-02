@@ -285,7 +285,6 @@
     <Folder Include="NativeLibraries\SQLite" />
     <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="Soundfingerprinting" />
-    <Folder Include="SoundPlayer" />
   </ItemGroup>
   <ItemGroup>
     <EmbeddedResource Include="FindSimilarClient\CompareAudioForm.resx">

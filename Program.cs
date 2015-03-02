@@ -26,7 +26,7 @@ namespace FindSimilar2
 	/// </summary>
 	internal sealed class Program
 	{
-		public static string VERSION = "2.0.1";
+		public static string VERSION = "2.0.2";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 
