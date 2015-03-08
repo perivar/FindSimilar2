@@ -30,7 +30,7 @@ namespace FindSimilar2.AudioProxies
 	/// using (BassProxy bass = new BassProxy())
 	/// {
 	/// 	string pathToRecoded = Path.GetFullPath(sfd.FileName);
-	/// 	bass.RecodeTheFile(_tbPathToFile.Text, pathToRecoded, (int) _nudSampleRate.Value);
+	/// 	bass.RecodeFileMono(_tbPathToFile.Text, pathToRecoded, (int) _nudSampleRate.Value);
 	/// }
 	/// </example>
 	/// <seealso cref="BassEngine.cs">BassEngine.cs from WPF Sound Visualization Library</seealso>
@@ -39,39 +39,41 @@ namespace FindSimilar2.AudioProxies
 	/// git://github.com/AddictedCS/soundfingerprinting.git
 	/// Code license: CPOL v.1.02
 	/// ciumac.sergiu@gmail.com
-	/// Modified by perivar@nerseth.com
+	/// Modified heaviliy by perivar@nerseth.com
 	/// </remarks>
 	public class BassProxy : IWaveformPlayer
 	{
-		#region fields
-		static BassProxy instance;
+		#region Fields
+		const int DEFAULT_SAMPLE_RATE = 44100; // Default sample rate used at initialization
+
+		static BassProxy _instance;
 		
 		// Position variables
-		readonly Timer positionTimer = new Timer(); // TODO: Can only make this work with the Windows.Form.Timer ?!
-		double currentChannelPosition; // current position in playing stream in seconds
-		bool inChannelSet;
-		bool inChannelTimerUpdate;
+		readonly Timer _positionTimer = new Timer(); // TODO: Can only make this work with the Windows.Form.Timer ?!
+		int _currentChannelSamplePosition; // current position in playing stream in samples
+		bool _inChannelSet;
+		bool _inChannelTimerUpdate;
 		
 		// Loop variables
-		private const int loopThreshold = 20; // what is the minimum amount of ms that can be looped
-		TimeSpan loopStart;
-		TimeSpan loopStop;
-		bool inLoopSet;
+		private const int LOOP_THRESHOLD_SAMPLES = 2; // what is the minimum amount of samples that can be looped
+		int _loopSampleStart;
+		int _loopSampleStop;
+		bool _inLoopSet;
 		
 		// Waveform Generator variables
-		readonly BackgroundWorker waveformGenerateWorker = new BackgroundWorker();
-		string pendingWaveformPath;
+		readonly BackgroundWorker _waveformGenerateWorker = new BackgroundWorker();
+		string _pendingWaveformPath;
 		
 		// Bass variables to track reaching end of stream or loop
-		readonly SYNCPROC endTrackSyncProc;
-		readonly SYNCPROC loopSyncProc;
-		int loopSyncId;
+		readonly SYNCPROC _endTrackSyncProc;
+		readonly SYNCPROC _loopSyncProc;
+		int _loopSyncId;
 		
 		// IAudio variables
-		bool canPlay;
-		bool canPause;
-		bool canStop;
-		bool isPlaying;
+		bool _canPlay;
+		bool _canPause;
+		bool _canStop;
+		bool _isPlaying;
 
 		/// <summary>
 		///   Shows whether the proxy is already disposed
@@ -84,52 +86,43 @@ namespace FindSimilar2.AudioProxies
 		int _playingStream;
 
 		// Properties retrieved when using OpenFile
-		int sampleRate;
-		int bitsPerSample;
-		int channels;
-		double channelLength; // duration in seconds
-		string filePath; // file path in openfile
+		int _sampleRate;
+		int _bitsPerSample;
+		int _channels;
+		int _channelSampleLength; // duration in samples
+		string _filePath; // file path in openfile
 		
-		float[] waveformData;
+		float[] _waveformData;
 		#endregion
-		
-		/// <summary>
-		///   Default sample rate used at initialization
-		/// </summary>
-		const int DEFAULT_SAMPLE_RATE = 44100;
 
+		#region Get Field Methods
 		public string FilePath {
 			get {
-				return filePath;
+				return _filePath;
 			}
 		}
 
 		public int SampleRate
 		{
-			get { return sampleRate; }
+			get { return _sampleRate; }
 		}
 
 		public int BitsPerSample
 		{
-			get { return bitsPerSample; }
+			get { return _bitsPerSample; }
 		}
 
 		public int Channels
 		{
-			get { return channels; }
+			get { return _channels; }
 		}
 		
-		public int ChannelSampleLength {
-			get {
-				return TotalSampleLength != -1 && Channels != 0 ? TotalSampleLength / Channels : -1;
-			}
-		}
-
 		public int TotalSampleLength {
 			get {
-				return waveformData != null ? waveformData.Length : -1;
+				return _waveformData != null ? _waveformData.Length : -1;
 			}
 		}
+		#endregion
 		
 		#region Constructors
 		static BassProxy()
@@ -232,12 +225,12 @@ namespace FindSimilar2.AudioProxies
 			Initialize();
 			
 			// Set the methods that BASS will call when reaching end of stream or repeat
-			endTrackSyncProc = EndTrack;
-			loopSyncProc = RepeatCallback;
+			_endTrackSyncProc = EndTrackSyncCallback;
+			_loopSyncProc = LoopSyncCallback;
 			
-			waveformGenerateWorker.DoWork += waveformGenerateWorker_DoWork;
-			waveformGenerateWorker.RunWorkerCompleted += waveformGenerateWorker_RunWorkerCompleted;
-			waveformGenerateWorker.WorkerSupportsCancellation = true;
+			_waveformGenerateWorker.DoWork += waveformGenerateWorker_DoWork;
+			_waveformGenerateWorker.RunWorkerCompleted += waveformGenerateWorker_RunWorkerCompleted;
+			_waveformGenerateWorker.WorkerSupportsCancellation = true;
 		}
 		#endregion
 
@@ -246,9 +239,9 @@ namespace FindSimilar2.AudioProxies
 		{
 			get
 			{
-				if (instance == null)
-					instance = new BassProxy();
-				return instance;
+				if (_instance == null)
+					_instance = new BassProxy();
+				return _instance;
 			}
 		}
 		#endregion
@@ -257,49 +250,48 @@ namespace FindSimilar2.AudioProxies
 		private void Initialize()
 		{
 			// Define the timer that checks the position while playing
-			positionTimer.Interval = 50; // 50 ms
-			positionTimer.Tick += OnTimedEvent;
+			_positionTimer.Interval = 50; // 50 ms
+			_positionTimer.Tick += OnTimedEvent;
 			
 			// The Timer is enabled/disabled in the IsPlaying method
 			IsPlaying = false;
 		}
 
-		private void SetLoopRange(TimeSpan startTime, TimeSpan endTime)
-		{
-			if (loopSyncId != 0)
-				Bass.BASS_ChannelRemoveSync(_playingStream, loopSyncId);
+		private void SetLoopRange(int startSamplePosition, int endSamplePosition) {
+			if (_loopSyncId != 0)
+				Bass.BASS_ChannelRemoveSync(_playingStream, _loopSyncId);
 
-			if ((endTime - startTime) > TimeSpan.FromMilliseconds(loopThreshold))
+			if ((endSamplePosition - startSamplePosition) > LOOP_THRESHOLD_SAMPLES)
 			{
 				// length in bytes (float = 32 bits = 4 bytes)
-				long byteLength = Bass.BASS_ChannelGetLength(_playingStream);
-				
-				long endPosition = (long)((endTime.TotalSeconds / ChannelLength) * byteLength);
+				long startPosition = (startSamplePosition * 4);
+				long endPosition = (endSamplePosition * 4);
 				
 				// For Sample Accurate Looping set mixtime POS sync at loop end
-				loopSyncId = Bass.BASS_ChannelSetSync(_playingStream,
-				                                      //BASSSync.BASS_SYNC_POS,
-				                                      BASSSync.BASS_SYNC_POS | BASSSync.BASS_SYNC_MIXTIME,
-				                                      (long)endPosition,
-				                                      loopSyncProc,
-				                                      IntPtr.Zero);
-				ChannelPosition = SelectionBegin.TotalSeconds;
+				_loopSyncId = Bass.BASS_ChannelSetSync(_playingStream,
+				                                       BASSSync.BASS_SYNC_POS | BASSSync.BASS_SYNC_MIXTIME,
+				                                       (long)endPosition,
+				                                       _loopSyncProc,
+				                                       IntPtr.Zero);
+				
+				// Seek to loop start
+				ChannelSamplePosition = startSamplePosition;
 			}
 			else
 				ClearLoopRange();
 		}
-
+		
 		private void ClearLoopRange()
 		{
-			if (loopSyncId != 0)
+			if (_loopSyncId != 0)
 			{
-				Bass.BASS_ChannelRemoveSync(_playingStream, loopSyncId);
-				loopSyncId = 0;
+				Bass.BASS_ChannelRemoveSync(_playingStream, _loopSyncId);
+				_loopSyncId = 0;
 			}
 		}
 		#endregion
 		
-		#region IAudio Members
+		#region Read Methods
 		/// <summary>
 		/// Read mono from file
 		/// </summary>
@@ -423,7 +415,6 @@ namespace FindSimilar2.AudioProxies
 			Bass.BASS_StreamFree(stream);
 			return data;
 		}
-		#endregion
 
 		/// <summary>
 		/// Read an audio file into a float array (32-bit floating-point sample data)
@@ -452,7 +443,7 @@ namespace FindSimilar2.AudioProxies
 			}
 			
 			// length in bytes (float = 32 bits = 4 bytes)
-			long byteLength = Bass.BASS_ChannelGetLength(mchan);
+			long byteLength = Bass.BASS_ChannelGetLength(mchan, BASSMode.BASS_POS_BYTES);
 			
 			// define float array
 			var buffer = new float[byteLength/4];
@@ -475,19 +466,24 @@ namespace FindSimilar2.AudioProxies
 			
 			return buffer;
 		}
+		#endregion
 		
 		#region Event Handlers
 		void OnTimedEvent(object sender, EventArgs e)
 		{
 			if (_playingStream == 0)
 			{
-				ChannelPosition = 0;
+				ChannelSamplePosition = 0;
 			}
 			else
 			{
-				inChannelTimerUpdate = true;
-				ChannelPosition = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetPosition(_playingStream, BASSMode.BASS_POS_BYTES));
-				inChannelTimerUpdate = false;
+				_inChannelTimerUpdate = true;
+
+				// get position in bytes (float = 32 bits = 4 bytes)
+				long bytePosition = Bass.BASS_ChannelGetPosition(_playingStream, BASSMode.BASS_POS_BYTES);
+				ChannelSamplePosition = (int) (bytePosition / 4);
+				
+				_inChannelTimerUpdate = false;
 			}
 		}
 		#endregion
@@ -505,22 +501,21 @@ namespace FindSimilar2.AudioProxies
 		
 		private void GenerateWaveformData(string path)
 		{
-			if (waveformGenerateWorker.IsBusy)
+			if (_waveformGenerateWorker.IsBusy)
 			{
-				pendingWaveformPath = path;
-				waveformGenerateWorker.CancelAsync();
+				_pendingWaveformPath = path;
+				_waveformGenerateWorker.CancelAsync();
 				return;
 			}
 
-			if (!waveformGenerateWorker.IsBusy)
-				waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(path));
+			if (!_waveformGenerateWorker.IsBusy)
+				_waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(path));
 		}
 		
 		void waveformGenerateWorker_DoWork(object sender, DoWorkEventArgs e)
 		{
 			var waveformParams = e.Argument as WaveformGenerationParams;
-			//WaveformData = ReadMonoFromFile(waveformParams.Path, sampleRate);
-			WaveformData = ReadFromFile(waveformParams.Path, sampleRate);
+			WaveformData = ReadFromFile(waveformParams.Path, _sampleRate);
 			
 			// TODO: Since ther main work is happening outside of this method, this have no purpose
 			/*
@@ -536,98 +531,97 @@ namespace FindSimilar2.AudioProxies
 		{
 			if (e.Cancelled)
 			{
-				if (!waveformGenerateWorker.IsBusy)
-					waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(pendingWaveformPath));
+				if (!_waveformGenerateWorker.IsBusy)
+					_waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(_pendingWaveformPath));
 			}
 		}
 		#endregion
 
 		#region IWaveformPlayer Members
-		public double ChannelPosition {
-			get { return currentChannelPosition; }
-			set
-			{
-				if (!inChannelSet)
-				{
-					inChannelSet = true; // Avoid recursion
-					
-					double oldValue = currentChannelPosition;
-					double position = Math.Max(0, Math.Min(value, ChannelLength)); // position in seconds
-					
-					if (!inChannelTimerUpdate) {
-						// Set position using time
-						Bass.BASS_ChannelSetPosition(_playingStream, Bass.BASS_ChannelSeconds2Bytes(_playingStream, position));
-						
-						// The loop calback also sets the ChannelPosition
-						// To enable sample accurate looping we should set position using samples
-						// seek to loop start
-						//Bass.BASS_ChannelSetPosition(_playingStream, loopstart, BASSMode.BASS_POS_BYTES)
-					}
-					
-					currentChannelPosition = position;
-					
-					if (oldValue != currentChannelPosition)
-						NotifyPropertyChanged("ChannelPosition");
-					
-					inChannelSet = false;
-				}
+		public int ChannelSampleLength {
+			get {
+				//return TotalSampleLength != -1 && Channels != 0 ? TotalSampleLength / Channels : -1;
+				return _channelSampleLength;
+			}
+			set {
+				int oldValue = _channelSampleLength;
+				_channelSampleLength = value;
+				if (oldValue != _channelSampleLength)
+					NotifyPropertyChanged("ChannelSampleLength");
 			}
 		}
 		
-		public double ChannelLength {
-			get { return channelLength; }
-			protected set
+		public int ChannelSamplePosition {
+			get { return _currentChannelSamplePosition; }
+			set
 			{
-				double oldValue = channelLength;
-				channelLength = value;
-				if (oldValue != channelLength)
-					NotifyPropertyChanged("ChannelLength");
+				if (!_inChannelSet)
+				{
+					_inChannelSet = true; // Avoid recursion
+					
+					int oldValue = _currentChannelSamplePosition;
+					int samplePosition = Math.Max(0, Math.Min(value, ChannelSampleLength)); // position in samples
+					
+					if (!_inChannelTimerUpdate) {
+						// Set position using bytes
+						// (float = 32 bits = 4 bytes)
+						long bytePosition = (samplePosition * 4);
+						Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES);
+					}
+					
+					_currentChannelSamplePosition = samplePosition;
+					
+					if (oldValue != _currentChannelSamplePosition)
+						NotifyPropertyChanged("ChannelSamplePosition");
+					
+					_inChannelSet = false;
+				}
 			}
 		}
 		
 		public float[] WaveformData {
-			get { return waveformData; }
+			get { return _waveformData; }
 			protected set
 			{
-				float[] oldValue = waveformData;
-				waveformData = value;
-				if (oldValue != waveformData)
+				float[] oldValue = _waveformData;
+				_waveformData = value;
+				if (oldValue != _waveformData)
 					NotifyPropertyChanged("WaveformData");
 			}
 		}
 		
-		public TimeSpan SelectionBegin {
-			get { return loopStart; }
+		public int SelectionSampleBegin {
+			get { return _loopSampleStart; }
 			set
 			{
-				if (!inLoopSet)
+				if (!_inLoopSet)
 				{
-					inLoopSet = true;
-					TimeSpan oldValue = loopStart;
-					loopStart = value;
-					if (oldValue != loopStart)
-						NotifyPropertyChanged("SelectionBegin");
+					_inLoopSet = true;
+					int oldValue = _loopSampleStart;
+					_loopSampleStart = value;
+					if (oldValue != _loopSampleStart)
+						NotifyPropertyChanged("SelectionSampleBegin");
 					
-					SetLoopRange(value, SelectionEnd);
-					inLoopSet = false;
+					SetLoopRange(value, SelectionSampleEnd);
+					_inLoopSet = false;
 				}
 			}
 		}
 		
-		public TimeSpan SelectionEnd {
-			get { return loopStop; }
+		public int SelectionSampleEnd {
+			get { return _loopSampleStop; }
 			set
 			{
-				if (!inChannelSet)
+				if (!_inChannelSet)
 				{
-					inLoopSet = true;
-					TimeSpan oldValue = loopStop;
-					loopStop = value;
-					if (oldValue != loopStop)
-						NotifyPropertyChanged("SelectionEnd");
+					_inLoopSet = true;
+					int oldValue = _loopSampleStop;
+					_loopSampleStop = value;
+					if (oldValue != _loopSampleStop)
+						NotifyPropertyChanged("SelectionSampleEnd");
 					
-					SetLoopRange(SelectionBegin, value);
-					inLoopSet = false;
+					SetLoopRange(SelectionSampleBegin, value);
+					_inLoopSet = false;
 				}
 			}
 		}
@@ -867,7 +861,7 @@ namespace FindSimilar2.AudioProxies
 			if (_playingStream != 0)
 			{
 				ClearLoopRange();
-				ChannelPosition = 0;
+				ChannelSamplePosition = 0;
 				Bass.BASS_StreamFree(_playingStream);
 			}
 			
@@ -887,24 +881,25 @@ namespace FindSimilar2.AudioProxies
 			if (_playingStream != 0) {
 				var info = Bass.BASS_ChannelGetInfo(_playingStream);
 
-				sampleRate = info.freq;
-				bitsPerSample = info.Is8bit ? 8 : (info.Is32bit ? 32 : 16);
-				channels = info.chans;
+				_sampleRate = info.freq;
+				_bitsPerSample = info.Is8bit ? 8 : (info.Is32bit ? 32 : 16);
+				_channels = info.chans;
 
-				// Get playing stream length in seconds
-				ChannelLength = Bass.BASS_ChannelBytes2Seconds(_playingStream, Bass.BASS_ChannelGetLength(_playingStream, BASSMode.BASS_POS_BYTES));
+				// Get playing stream length in samples (float = 32 bits = 4 bytes)
+				long channelByteLength = Bass.BASS_ChannelGetLength(_playingStream, BASSMode.BASS_POS_BYTES);
+				ChannelSampleLength = (int) (channelByteLength / 4);
 				
 				// Set the stream to call Stop() when it ends.
 				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
 				                                          BASSSync.BASS_SYNC_END,
 				                                          0,
-				                                          endTrackSyncProc,
+				                                          _endTrackSyncProc,
 				                                          IntPtr.Zero);
 
 				if (syncHandle == 0)
 					throw new ArgumentException("Error establishing End Sync on file stream.", "path");
 				
-				filePath = path;
+				_filePath = path;
 				CanPlay = true;
 			} else {
 				CanPlay = false;
@@ -941,12 +936,13 @@ namespace FindSimilar2.AudioProxies
 		
 		public void Stop()
 		{
-			ChannelPosition = SelectionBegin.TotalSeconds;
+			ChannelSamplePosition = SelectionSampleBegin;
 			if (_playingStream != 0)
 			{
 				Bass.BASS_ChannelStop(_playingStream);
-				// set playback position in seconds
-				Bass.BASS_ChannelSetPosition(_playingStream, ChannelPosition);
+				// set playback position in bytes (float = 32 bits = 4 bytes)
+				long bytePosition = (ChannelSamplePosition * 4);
+				Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES);
 			}
 			IsPlaying = false;
 			CanStop = false;
@@ -956,65 +952,65 @@ namespace FindSimilar2.AudioProxies
 		#endregion
 
 		#region Callbacks
-		private void EndTrack(int handle, int channel, int data, IntPtr user)
+		private void EndTrackSyncCallback(int handle, int channel, int data, IntPtr user)
 		{
 			Stop();
 		}
 
-		private void RepeatCallback(int handle, int channel, int data, IntPtr user)
+		private void LoopSyncCallback(int handle, int channel, int data, IntPtr user)
 		{
-			ChannelPosition = SelectionBegin.TotalSeconds;
+			ChannelSamplePosition = SelectionSampleBegin;
 		}
 		#endregion
 		
 		#region Public Properties
 		public bool CanPlay
 		{
-			get { return canPlay; }
+			get { return _canPlay; }
 			protected set
 			{
-				bool oldValue = canPlay;
-				canPlay = value;
-				if (oldValue != canPlay)
+				bool oldValue = _canPlay;
+				_canPlay = value;
+				if (oldValue != _canPlay)
 					NotifyPropertyChanged("CanPlay");
 			}
 		}
 
 		public bool CanPause
 		{
-			get { return canPause; }
+			get { return _canPause; }
 			protected set
 			{
-				bool oldValue = canPause;
-				canPause = value;
-				if (oldValue != canPause)
+				bool oldValue = _canPause;
+				_canPause = value;
+				if (oldValue != _canPause)
 					NotifyPropertyChanged("CanPause");
 			}
 		}
 
 		public bool CanStop
 		{
-			get { return canStop; }
+			get { return _canStop; }
 			protected set
 			{
-				bool oldValue = canStop;
-				canStop = value;
-				if (oldValue != canStop)
+				bool oldValue = _canStop;
+				_canStop = value;
+				if (oldValue != _canStop)
 					NotifyPropertyChanged("CanStop");
 			}
 		}
 
 		public bool IsPlaying
 		{
-			get { return isPlaying; }
+			get { return _isPlaying; }
 			protected set
 			{
-				bool oldValue = isPlaying;
-				isPlaying = value;
-				if (oldValue != isPlaying)
+				bool oldValue = _isPlaying;
+				_isPlaying = value;
+				if (oldValue != _isPlaying)
 					NotifyPropertyChanged("IsPlaying");
 
-				positionTimer.Enabled = value;
+				_positionTimer.Enabled = value;
 			}
 		}
 		#endregion
