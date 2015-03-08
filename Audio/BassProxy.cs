@@ -291,7 +291,18 @@ namespace FindSimilar2.AudioProxies
 		}
 		#endregion
 		
-		#region Read Methods
+		#region Public Static Methods
+		/// <summary>
+		/// Read mono data from file (32-bit floating-point sample data)
+		/// </summary>
+		/// <param name = "filename">Filename to be read</param>
+		/// <param name = "samplerate">Sample rate at which to perform reading</param>
+		/// <returns>Array with mono data</returns>
+		public static float[] ReadMonoFromFile(string filename, int samplerate)
+		{
+			return ReadMonoFromFile(filename, samplerate, 0, 0);
+		}
+		
 		/// <summary>
 		/// Read mono from file
 		/// </summary>
@@ -304,7 +315,7 @@ namespace FindSimilar2.AudioProxies
 		/// Seeking capabilities of Bass where not used because of the possible
 		/// timing errors on different formats.
 		/// </remarks>
-		public float[] ReadMonoFromFile(string filename, int samplerate, int milliseconds, int startmillisecond)
+		public static float[] ReadMonoFromFile(string filename, int samplerate, int milliseconds, int startmillisecond)
 		{
 			int totalmilliseconds = milliseconds <= 0 ? Int32.MaxValue : milliseconds + startmillisecond;
 			float[] data = null;
@@ -421,7 +432,13 @@ namespace FindSimilar2.AudioProxies
 		/// </summary>
 		/// <param name = "filename">Filename to be read</param>
 		/// <param name = "samplerate">Sample rate at which to perform reading</param>
-		/// <returns>Array with mono data</returns>
+		/// <returns>Array with multi channel data</returns>
+		/// <remarks>
+		/// Audio data should be structured in an array where each sucessive index
+		/// alternates between left or right channel data, starting with left. Index 0
+		/// should be the first left level, index 1 should be the first right level, index
+		/// 2 should be the second left level, etc.
+		/// </remarks>
 		public static float[] ReadFromFile(string filename, int samplerate) {
 			
 			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
@@ -466,168 +483,6 @@ namespace FindSimilar2.AudioProxies
 			
 			return buffer;
 		}
-		#endregion
-		
-		#region Event Handlers
-		void OnTimedEvent(object sender, EventArgs e)
-		{
-			if (_playingStream == 0)
-			{
-				ChannelSamplePosition = 0;
-			}
-			else
-			{
-				_inChannelTimerUpdate = true;
-
-				// get position in bytes (float = 32 bits = 4 bytes)
-				long bytePosition = Bass.BASS_ChannelGetPosition(_playingStream, BASSMode.BASS_POS_BYTES);
-				ChannelSamplePosition = (int) (bytePosition / 4);
-				
-				_inChannelTimerUpdate = false;
-			}
-		}
-		#endregion
-		
-		#region Waveform Generation
-		private class WaveformGenerationParams
-		{
-			public WaveformGenerationParams(string path)
-			{
-				Path = path;
-			}
-
-			public string Path { get; protected set; }
-		}
-		
-		private void GenerateWaveformData(string path)
-		{
-			if (_waveformGenerateWorker.IsBusy)
-			{
-				_pendingWaveformPath = path;
-				_waveformGenerateWorker.CancelAsync();
-				return;
-			}
-
-			if (!_waveformGenerateWorker.IsBusy)
-				_waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(path));
-		}
-		
-		void waveformGenerateWorker_DoWork(object sender, DoWorkEventArgs e)
-		{
-			var waveformParams = e.Argument as WaveformGenerationParams;
-			WaveformData = ReadFromFile(waveformParams.Path, _sampleRate);
-			
-			// TODO: Since ther main work is happening outside of this method, this have no purpose
-			/*
-			if (waveformGenerateWorker.CancellationPending)
-			{
-				e.Cancel = true;
-				break; ;
-			}
-			 */
-		}
-
-		void waveformGenerateWorker_RunWorkerCompleted(object sender, AsyncCompletedEventArgs e)
-		{
-			if (e.Cancelled)
-			{
-				if (!_waveformGenerateWorker.IsBusy)
-					_waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(_pendingWaveformPath));
-			}
-		}
-		#endregion
-
-		#region IWaveformPlayer Members
-		public int ChannelSampleLength {
-			get {
-				//return TotalSampleLength != -1 && Channels != 0 ? TotalSampleLength / Channels : -1;
-				return _channelSampleLength;
-			}
-			set {
-				int oldValue = _channelSampleLength;
-				_channelSampleLength = value;
-				if (oldValue != _channelSampleLength)
-					NotifyPropertyChanged("ChannelSampleLength");
-			}
-		}
-		
-		public int ChannelSamplePosition {
-			get { return _currentChannelSamplePosition; }
-			set
-			{
-				if (!_inChannelSet)
-				{
-					_inChannelSet = true; // Avoid recursion
-					
-					int oldValue = _currentChannelSamplePosition;
-					int samplePosition = Math.Max(0, Math.Min(value, ChannelSampleLength)); // position in samples
-					
-					if (!_inChannelTimerUpdate) {
-						// Set position using bytes
-						// (float = 32 bits = 4 bytes)
-						long bytePosition = (samplePosition * 4);
-						Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES);
-					}
-					
-					_currentChannelSamplePosition = samplePosition;
-					
-					if (oldValue != _currentChannelSamplePosition)
-						NotifyPropertyChanged("ChannelSamplePosition");
-					
-					_inChannelSet = false;
-				}
-			}
-		}
-		
-		public float[] WaveformData {
-			get { return _waveformData; }
-			protected set
-			{
-				float[] oldValue = _waveformData;
-				_waveformData = value;
-				if (oldValue != _waveformData)
-					NotifyPropertyChanged("WaveformData");
-			}
-		}
-		
-		public int SelectionSampleBegin {
-			get { return _loopSampleStart; }
-			set
-			{
-				if (!_inLoopSet)
-				{
-					_inLoopSet = true;
-					int oldValue = _loopSampleStart;
-					_loopSampleStart = value;
-					if (oldValue != _loopSampleStart)
-						NotifyPropertyChanged("SelectionSampleBegin");
-					
-					SetLoopRange(value, SelectionSampleEnd);
-					_inLoopSet = false;
-				}
-			}
-		}
-		
-		public int SelectionSampleEnd {
-			get { return _loopSampleStop; }
-			set
-			{
-				if (!_inChannelSet)
-				{
-					_inLoopSet = true;
-					int oldValue = _loopSampleStop;
-					_loopSampleStop = value;
-					if (oldValue != _loopSampleStop)
-						NotifyPropertyChanged("SelectionSampleEnd");
-					
-					SetLoopRange(SelectionSampleBegin, value);
-					_inLoopSet = false;
-				}
-			}
-		}
-		#endregion
-
-		#region Public Methods
 		
 		/// <summary>
 		/// Read the spectrum from file
@@ -708,17 +563,6 @@ namespace FindSimilar2.AudioProxies
 			}
 
 			return data.ToArray();
-		}
-
-		/// <summary>
-		/// Read mono data from file (32-bit floating-point sample data)
-		/// </summary>
-		/// <param name = "filename">Filename to be read</param>
-		/// <param name = "samplerate">Sample rate at which to perform reading</param>
-		/// <returns>Array with mono data</returns>
-		public float[] ReadMonoFromFile(string filename, int samplerate)
-		{
-			return ReadMonoFromFile(filename, samplerate, 0, 0);
 		}
 		
 		/// <summary>
@@ -814,6 +658,172 @@ namespace FindSimilar2.AudioProxies
 			var writer = new WaveWriter(outFileName, 1, targetSampleRate, 32, true);
 			writer.Write(buffer, buffer.Length << 2);
 			writer.Close();
+		}
+		#endregion
+		
+		#region Event Handlers
+		void OnTimedEvent(object sender, EventArgs e)
+		{
+			if (_playingStream == 0)
+			{
+				ChannelSamplePosition = 0;
+			}
+			else
+			{
+				_inChannelTimerUpdate = true;
+
+				// get position in bytes (float = 32 bits = 4 bytes)
+				long bytePosition = Bass.BASS_ChannelGetPosition(_playingStream, BASSMode.BASS_POS_BYTES);
+				ChannelSamplePosition = (int) (bytePosition / 4);
+				
+				_inChannelTimerUpdate = false;
+			}
+		}
+		#endregion
+		
+		#region Waveform Generation
+		private class WaveformGenerationParams
+		{
+			public WaveformGenerationParams(string path)
+			{
+				Path = path;
+			}
+
+			public string Path { get; protected set; }
+		}
+		
+		private void GenerateWaveformData(string path)
+		{
+			if (_waveformGenerateWorker.IsBusy)
+			{
+				_pendingWaveformPath = path;
+				_waveformGenerateWorker.CancelAsync();
+				return;
+			}
+
+			if (!_waveformGenerateWorker.IsBusy)
+				_waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(path));
+		}
+		
+		void waveformGenerateWorker_DoWork(object sender, DoWorkEventArgs e)
+		{
+			var waveformParams = e.Argument as WaveformGenerationParams;
+			WaveformData = ReadFromFile(waveformParams.Path, _sampleRate);
+			
+			// TODO: Since ther main work is happening outside of this method, this have no purpose
+			/*
+			if (waveformGenerateWorker.CancellationPending)
+			{
+				e.Cancel = true;
+				break; ;
+			}
+			 */
+		}
+
+		void waveformGenerateWorker_RunWorkerCompleted(object sender, AsyncCompletedEventArgs e)
+		{
+			if (e.Cancelled)
+			{
+				if (!_waveformGenerateWorker.IsBusy)
+					_waveformGenerateWorker.RunWorkerAsync(new WaveformGenerationParams(_pendingWaveformPath));
+			}
+		}
+		#endregion
+
+		#region IWaveformPlayer Members
+		public double ChannelLength {
+			get {
+				return (double) _channelSampleLength / (double) _sampleRate;
+			}
+		}
+		
+		public int ChannelSampleLength {
+			get {
+				return _channelSampleLength;
+			}
+			set {
+				int oldValue = _channelSampleLength;
+				_channelSampleLength = value;
+				if ( oldValue != _channelSampleLength) {
+					NotifyPropertyChanged("ChannelSampleLength");
+					NotifyPropertyChanged("ChannelLength");
+				}
+			}
+		}
+		
+		public int ChannelSamplePosition {
+			get { return _currentChannelSamplePosition; }
+			set
+			{
+				if (!_inChannelSet)
+				{
+					_inChannelSet = true; // Avoid recursion
+					
+					int oldValue = _currentChannelSamplePosition;
+					int samplePosition = Math.Max(0, Math.Min(value, ChannelSampleLength)); // position in samples
+					
+					if (!_inChannelTimerUpdate) {
+						// Set position using bytes
+						// (float = 32 bits = 4 bytes)
+						long bytePosition = (samplePosition * 4);
+						Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES);
+					}
+					
+					_currentChannelSamplePosition = samplePosition;
+					
+					if (oldValue != _currentChannelSamplePosition)
+						NotifyPropertyChanged("ChannelSamplePosition");
+					
+					_inChannelSet = false;
+				}
+			}
+		}
+		
+		public float[] WaveformData {
+			get { return _waveformData; }
+			protected set
+			{
+				float[] oldValue = _waveformData;
+				_waveformData = value;
+				if (oldValue != _waveformData)
+					NotifyPropertyChanged("WaveformData");
+			}
+		}
+		
+		public int SelectionSampleBegin {
+			get { return _loopSampleStart; }
+			set
+			{
+				if (!_inLoopSet)
+				{
+					_inLoopSet = true;
+					int oldValue = _loopSampleStart;
+					_loopSampleStart = value;
+					if (oldValue != _loopSampleStart)
+						NotifyPropertyChanged("SelectionSampleBegin");
+					
+					SetLoopRange(value, SelectionSampleEnd);
+					_inLoopSet = false;
+				}
+			}
+		}
+		
+		public int SelectionSampleEnd {
+			get { return _loopSampleStop; }
+			set
+			{
+				if (!_inChannelSet)
+				{
+					_inLoopSet = true;
+					int oldValue = _loopSampleStop;
+					_loopSampleStop = value;
+					if (oldValue != _loopSampleStop)
+						NotifyPropertyChanged("SelectionSampleEnd");
+					
+					SetLoopRange(SelectionSampleBegin, value);
+					_inLoopSet = false;
+				}
+			}
 		}
 		#endregion
 		

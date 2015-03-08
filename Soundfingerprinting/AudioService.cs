@@ -48,7 +48,7 @@ namespace Soundfingerprinting.Audio.Services
 		/// <returns>Array with data samples</returns>
 		public float[] ReadMonoFromFile(
 			string pathToFile, int sampleRate, int milliSeconds, int startMilliSeconds) {
-			return BassProxy.Instance.ReadMonoFromFile(pathToFile, sampleRate, milliSeconds, startMilliSeconds);
+			return BassProxy.ReadMonoFromFile(pathToFile, sampleRate, milliSeconds, startMilliSeconds);
 		}
 
 		/// <summary>
