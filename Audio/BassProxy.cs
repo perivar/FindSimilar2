@@ -649,13 +649,18 @@ namespace FindSimilar2.AudioProxies
 		}
 		
 		/// <summary>
-		/// Save float buffer as ieefloat wave file
 		/// </summary>
-		/// <param name="buffer">float array</param>
-		/// <param name="outFileName">filename</param>
-		/// <param name="targetSampleRate">target samplerate </param>
-		public static void SaveFile(float[] buffer, string outFileName, int targetSampleRate) {
-			var writer = new WaveWriter(outFileName, 1, targetSampleRate, 32, true);
+
+		/// <summary>
+		/// Save float buffer as IEEE Float wave file
+		/// </summary>
+		/// <param name="buffer">Float array</param>
+		/// <param name="fileName">Fully referenced path and file name of the Wave file to create.</param>
+		/// <param name="numChannels">Number of channels of the wave file (1=mono, 2=stereo...).</param>
+		/// <param name="sampleRate">Sample rate of the wave file (e.g. 8000, 11025, 22050, 44100, 48000, 96000) in Hz.</param>
+		/// <param name="bitsPerSample">Bits per sample of the wave file (must be either 8, 16, 24 or 32).</param>
+		public static void SaveFile(float[] buffer, string fileName, int numChannels, int sampleRate, int bitsPerSample) {
+			var writer = new WaveWriter(fileName, numChannels, sampleRate, bitsPerSample, true);
 			writer.Write(buffer, buffer.Length << 2);
 			writer.Close();
 		}
@@ -863,7 +868,7 @@ namespace FindSimilar2.AudioProxies
 		}
 		#endregion
 		
-		#region Open methods
+		#region Public Open and Save method
 		public void OpenFile(string path) {
 			
 			Stop();
@@ -914,6 +919,10 @@ namespace FindSimilar2.AudioProxies
 			} else {
 				CanPlay = false;
 			}
+		}
+		
+		public void SaveFile(string path) {
+			SaveFile(this.WaveformData, path, this.Channels, this.SampleRate, this.BitsPerSample);
 		}
 		#endregion
 		
