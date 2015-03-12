@@ -265,7 +265,6 @@
     <None Include="Soundfingerprinting\perms.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="Soundfingerprinting\README.txt" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="FindSimilarClient" />
