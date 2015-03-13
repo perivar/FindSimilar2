@@ -26,7 +26,7 @@ namespace FindSimilar2
 	/// </summary>
 	internal sealed class Program
 	{
-		public static string VERSION = "2.0.2";
+		public static string VERSION = "2.0.3";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 
@@ -261,7 +261,7 @@ namespace FindSimilar2
 				Application.EnableVisualStyles();
 				Application.SetCompatibleTextRenderingDefault(false);
 				Application.Run(new FindSimilarClientForm());
-				//Application.Run(new WaveEditor());
+				//Application.Run(new WaveEditor.WaveEditor());
 			}
 			
 			private static void FindSoundfingerprinting(FileInfo fi, Repository repository, int numToTake) {
