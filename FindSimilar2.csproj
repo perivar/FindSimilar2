@@ -54,6 +54,9 @@
     <Reference Include="Microsoft.CSharp">
       <RequiredTargetFramework>4.0</RequiredTargetFramework>
     </Reference>
+    <Reference Include="NAudio">
+      <HintPath>NativeLibraries\NAudio\NAudio.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -97,6 +100,7 @@
     <Compile Include="Analyzer.cs" />
     <Compile Include="Audio\AudioFileReader.cs" />
     <Compile Include="Audio\BassProxy.cs" />
+    <Compile Include="Audio\SampleConverter.cs" />
     <Compile Include="FindSimilarClient\CompareAudioForm.cs" />
     <Compile Include="FindSimilarClient\CompareAudioForm.Designer.cs">
       <DependentUpon>CompareAudioForm.cs</DependentUpon>

@@ -24,6 +24,9 @@ namespace Soundfingerprinting.Audio.Services
 		public AudioService()
 		{
 			lomonFFT = new Lomont.LomontFFT();
+			
+			// Try to use Un4Seen Bass
+			BassProxy bass = BassProxy.Instance;
 		}
 
 		// normalize power (volume) of an audio file.

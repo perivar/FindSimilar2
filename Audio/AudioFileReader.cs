@@ -29,7 +29,7 @@ namespace FindSimilar2.Audio
 				}
 			}
 			
-			// Try to use Un4Seen Bass
+			// Try to use Un4Seen Bass to check duration
 			BassProxy bass = BassProxy.Instance;
 			double duration = BassProxy.GetDurationInSeconds(fileIn);
 			if (duration > 0) {
