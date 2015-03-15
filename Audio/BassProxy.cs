@@ -41,15 +41,15 @@ namespace FindSimilar2.AudioProxies
 		static BassProxy _instance;
 		
 		// Position variables
-		//readonly Timer _positionTimer = new Timer(); // TODO: Can only make this work with the Windows.Form.Timer ?!
-		private readonly BASSTimer _positionTimer = new BASSTimer();
+		readonly Timer _positionTimer = new Timer(); // TODO: Can only make this work with the Windows.Form.Timer ?!
+		//readonly BASSTimer _positionTimer = new BASSTimer(); // This causes a crash if closing the form during playing
 
 		int _currentChannelSamplePosition; // current position in playing stream in samples
 		bool _inChannelSet;
 		bool _inChannelTimerUpdate;
 		
 		// Loop variables
-		private const int LOOP_THRESHOLD_SAMPLES = 2; // what is the minimum amount of samples that can be looped
+		const int LOOP_THRESHOLD_SAMPLES = 2; // what is the minimum amount of samples that can be looped
 		int _loopSampleStart;
 		int _loopSampleStop;
 		bool _inLoopSet;
@@ -70,12 +70,12 @@ namespace FindSimilar2.AudioProxies
 		bool _isPlaying;
 
 		/// <summary>
-		///   Shows whether the proxy is already disposed
+		/// Shows whether the Bass Engine (proxy) has already been disposed
 		/// </summary>
-		bool _alreadyDisposed;
+		bool _hasDisposed = false;
 
 		/// <summary>
-		///   Currently playing stream
+		/// Currently playing stream
 		/// </summary>
 		int _playingStream;
 
@@ -93,11 +93,11 @@ namespace FindSimilar2.AudioProxies
 		
 		// playing from memory variables
 		bool _doPlayFromMemory = false;
-		private STREAMPROC _myStreamCreate; // make it global, so that the GC can not remove it
-		private byte[] _data = null; // our local byte buffer
-		private float[] _floatData = null; // our local float buffer
-		private MemoryStream _memStream = null;
-		private int _waveformDataIndex = 0; // index in the waveform float array
+		STREAMPROC _myStreamCreate; // make it global, so that the GC can not remove it
+		byte[] _data = null; // our local byte buffer
+		float[] _floatData = null; // our local float buffer
+		MemoryStream _memStream = null;
+		int _waveformDataIndex = 0; // index in the waveform float array
 
 		#endregion
 
@@ -793,6 +793,7 @@ namespace FindSimilar2.AudioProxies
 			}
 			else
 			{
+				// Make sure to not Set the position at the same time we are reading it
 				_inChannelTimerUpdate = true;
 
 				// get position in bytes (float = 32 bits = 4 bytes)
@@ -895,9 +896,9 @@ namespace FindSimilar2.AudioProxies
 						// Set position using bytes
 						// (float = 32 bits = 4 bytes)
 						long bytePosition = (samplePosition * 4);
-						Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES);
+						if (!Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES)) // try seeking to loop start
+							Bass.BASS_ChannelSetPosition(_playingStream, 0, BASSMode.BASS_POS_BYTES); // failed, go to start of file instead
 					}
-					
 					_currentChannelSamplePosition = samplePosition;
 					
 					if (oldValue != _currentChannelSamplePosition)
@@ -941,7 +942,7 @@ namespace FindSimilar2.AudioProxies
 			get { return _loopSampleStop; }
 			set
 			{
-				if (!_inChannelSet)
+				if (!_inLoopSet) // TODO: this was !_inChannelSet, i suppose this was wrong?
 				{
 					_inLoopSet = true;
 					int oldValue = _loopSampleStop;
@@ -956,39 +957,53 @@ namespace FindSimilar2.AudioProxies
 		}
 		#endregion
 		
-		#region IDisposable
+		#region IDisposable implementation
+		
 		/// <summary>
-		///   Dispose the unmanaged resource. Free bass.dll.
+		/// Public implementation of Dispose pattern callable by consumers.
 		/// </summary>
 		public void Dispose()
 		{
-			Dispose(false);
-			_alreadyDisposed = true;
+			Dispose(true);
 			GC.SuppressFinalize(this);
 		}
 		
 		/// <summary>
-		///   Dispose the resources
+		/// Protected implementation of Dispose pattern.
 		/// </summary>
-		/// <param name = "isDisposing">If value is disposing</param>
+		/// <param name="isDisposing">If value is disposing</param>
 		protected virtual void Dispose(bool isDisposing)
 		{
-			if (!_alreadyDisposed)
+			if (_hasDisposed)
+				return;
+			
+			if (!isDisposing)
 			{
-				if (!isDisposing)
+				// Free any other managed objects here.
+				if (_playingStream != 0)
 				{
-					//release managed resources
+					Bass.BASS_StreamFree(_playingStream);
+					_playingStream = 0;
 				}
+				
+				if (_memStream != null) {
+					_memStream.Dispose();
+				}
+				
+				_waveformData = null;
+				
 				//Bass.BASS_Free();
 			}
+			
+			_hasDisposed = true;
 		}
 
 		/// <summary>
-		///   Finalizer
+		/// Finalizer
 		/// </summary>
 		~BassProxy()
 		{
-			Dispose(true);
+			Dispose(false);
 		}
 		#endregion
 		
@@ -1240,7 +1255,18 @@ namespace FindSimilar2.AudioProxies
 
 		private void LoopSyncCallback(int handle, int channel, int data, IntPtr user)
 		{
-			ChannelSamplePosition = SelectionSampleBegin;
+			//ChannelSamplePosition = SelectionSampleBegin;
+
+			// Setting the loop position using the Set property for ChannelSamplePosition does
+			// sometimes fail because of conflicting progress (timer update) at the same time
+			// therefore do it directly:
+
+			// Set position using bytes
+			// (float = 32 bits = 4 bytes)
+			long bytePosition = (SelectionSampleBegin * 4);
+			if (!Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES)) // try seeking to loop start
+				Bass.BASS_ChannelSetPosition(_playingStream, 0, BASSMode.BASS_POS_BYTES); // failed, go to start of file instead
+			
 		}
 		#endregion
 		

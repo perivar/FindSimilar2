@@ -250,10 +250,11 @@ namespace FindSimilar2
 		void OpenEditorToolStripMenuItemClick(object sender, System.EventArgs e)
 		{
 			if (selectedFilePath != null) {
-				var editor = new WaveEditor.WaveEditor();
-				editor.RegisterSoundPlayer(player);
-				editor.OpenFileAndRedraw(selectedFilePath);
-				editor.Show();
+				using (var editor = new WaveEditor.WaveEditor()) {
+					editor.RegisterSoundPlayer(player);
+					editor.OpenFileAndRedraw(selectedFilePath);
+					editor.ShowDialog();
+				}
 			}
 		}
 		
