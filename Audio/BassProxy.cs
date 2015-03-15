@@ -1239,6 +1239,11 @@ namespace FindSimilar2.AudioProxies
 				// set playback position in bytes (float = 32 bits = 4 bytes)
 				long bytePosition = (ChannelSamplePosition * 4);
 				Bass.BASS_ChannelSetPosition(_playingStream, bytePosition, BASSMode.BASS_POS_BYTES);
+
+				if (_doPlayFromMemory) {
+					// TODO: where should this go?
+					_memStream.Position = ChannelSamplePosition;
+				}
 			}
 			IsPlaying = false;
 			CanStop = false;
