@@ -305,7 +305,9 @@ namespace FindSimilar2.AudioProxies
 				_memStream.Position = bytePosition;
 			}
 			
-			_waveformDataIndex = samplePosition * 2; // TODO: 2 channels
+			if (_doPlayFromMemory) {
+				_waveformDataIndex = samplePosition * _channels; // 2 channels
+			}
 			
 			// try setting the position
 			if (!Bass.BASS_ChannelSetPosition(channelHandle, bytePosition, BASSMode.BASS_POS_BYTES)) {
@@ -330,15 +332,23 @@ namespace FindSimilar2.AudioProxies
 			int samplePosition = -1;
 			long bytePosition = -1;
 			
+			/*
 			// get position in bytes (float = 32 bits = 4 bytes)
 			if (false && _memStream != null) {
 				bytePosition = _memStream.Position;
 			} else {
 				bytePosition = Bass.BASS_ChannelGetPosition(channelHandle, BASSMode.BASS_POS_BYTES);
 			}
+			 */
+			bytePosition = Bass.BASS_ChannelGetPosition(channelHandle, BASSMode.BASS_POS_BYTES);
+			//bytePosition = _waveformDataIndex * _channels;
 			
 			if (bytePosition != -1) {
-				samplePosition = (int) (bytePosition / 4); // TODO why do I need /2 when using ReadFloat PROC
+				if (_doPlayFromMemory) {
+					samplePosition = (int) (bytePosition / _channels); // TODO why do I need /2 when using ReadFloat PROC
+				} else {
+					samplePosition = (int) (bytePosition / 4); // TODO why do I need /2 when using ReadFloat PROC
+				}
 			} else {
 				String errorCode = Bass.BASS_ErrorGetCode().ToString();
 			}
@@ -1093,9 +1103,6 @@ namespace FindSimilar2.AudioProxies
 				// copy the full segment into the float data buffer
 				Array.Copy(_waveformData, _waveformDataIndex, _floatData, 0, l4);
 				_waveformDataIndex += l4;
-			} else if (_waveformDataIndex >= _waveformData.Length) {
-				// we have reached the end, remaining samples is zero
-				length |= (int)BASSStreamProc.BASS_STREAMPROC_END;
 			} else {
 				int remainingSamples = _waveformData.Length - _waveformDataIndex;
 				if (remainingSamples > 0) {
@@ -1103,21 +1110,16 @@ namespace FindSimilar2.AudioProxies
 					Array.Copy(_waveformData, _waveformDataIndex, _floatData, 0, remainingSamples);
 					_waveformDataIndex += remainingSamples;
 					length = remainingSamples * 4;
-				} else if (remainingSamples < 0) {
-					// the remaining samples length is negative
-					// this should never happen.
-					_waveformDataIndex = 0;
+					l4 = remainingSamples;
 					length |= (int)BASSStreamProc.BASS_STREAMPROC_END;
 				} else {
-					// we have reached the end, remaining samples is zero
-					_waveformDataIndex = 0;
-					length |= (int)BASSStreamProc.BASS_STREAMPROC_END;
+					// this should never happen
+					return 0;
 				}
 			}
 
 			// copy back from unmanaged to managed memory
-			if (length > 0)
-				Marshal.Copy(_floatData, 0, buffer, l4);
+			Marshal.Copy(_floatData, 0, buffer, l4);
 			
 			return length;
 		}
@@ -1178,7 +1180,6 @@ namespace FindSimilar2.AudioProxies
 				
 				// Use a Bass Sample to play the float array. Unfortunatly this doesn't support looping
 				int handle = Bass.BASS_SampleCreate(_waveformData.Length << 2, _sampleRate, _channels, 0xFFFF,
-				                                    //BASSFlag.BASS_SAMPLE_SOFTWARE |
 				                                    BASSFlag.BASS_SAMPLE_FLOAT |
 				                                    BASSFlag.BASS_STREAM_DECODE
 				                                   );
@@ -1259,7 +1260,7 @@ namespace FindSimilar2.AudioProxies
 			}
 			
 			// TODO: Why do I have to divide this by 2 when I use BASSReadProcMemoryStream or BASSReadProcFloatArray
-			ChannelSampleLength = sampleLength / 2; // Notify
+			ChannelSampleLength = sampleLength / _channels; // Notify
 		}
 		
 		public void OpenFileUsingFileStream(string path) {
