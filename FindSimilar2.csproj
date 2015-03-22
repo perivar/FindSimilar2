@@ -162,6 +162,12 @@
     <None Include="NativeLibraries\Bass\Bass.Net.dll" />
     <None Include="NativeLibraries\Bass\Bass.Net.xml" />
     <None Include="NativeLibraries\Bass\bass.txt" />
+    <None Include="NativeLibraries\Bass\bassasio.chm" />
+    <None Include="NativeLibraries\Bass\bassasio.dll" />
+    <None Include="NativeLibraries\Bass\bassasio.txt" />
+    <None Include="NativeLibraries\Bass\bassenc.chm" />
+    <None Include="NativeLibraries\Bass\bassenc.dll" />
+    <None Include="NativeLibraries\Bass\bassenc.txt" />
     <None Include="NativeLibraries\Bass\bassflac.chm" />
     <None Include="NativeLibraries\Bass\bassflac.dll" />
     <None Include="NativeLibraries\Bass\bassflac.txt" />
@@ -171,10 +177,15 @@
     <None Include="NativeLibraries\Bass\basswma.chm" />
     <None Include="NativeLibraries\Bass\basswma.dll" />
     <None Include="NativeLibraries\Bass\basswma.txt" />
+    <None Include="NativeLibraries\Bass\basswv.chm" />
+    <None Include="NativeLibraries\Bass\basswv.dll" />
+    <None Include="NativeLibraries\Bass\basswv.txt" />
     <None Include="NativeLibraries\Bass\bass_aac.dll" />
     <None Include="NativeLibraries\Bass\bass_aac.txt" />
     <None Include="NativeLibraries\Bass\bass_ac3.dll" />
     <None Include="NativeLibraries\Bass\bass_ac3.txt" />
+    <None Include="NativeLibraries\Bass\bass_alac.dll" />
+    <None Include="NativeLibraries\Bass\bass_alac.txt" />
     <None Include="NativeLibraries\Bass\bass_ape.dll" />
     <None Include="NativeLibraries\Bass\bass_ape.txt" />
     <None Include="NativeLibraries\Bass\bass_fx.chm" />
@@ -182,6 +193,8 @@
     <None Include="NativeLibraries\Bass\bass_fx.txt" />
     <None Include="NativeLibraries\Bass\bass_mpc.dll" />
     <None Include="NativeLibraries\Bass\bass_mpc.txt" />
+    <None Include="NativeLibraries\Bass\bass_tta.dll" />
+    <None Include="NativeLibraries\Bass\bass_tta.txt" />
     <None Include="NativeLibraries\Bass\tags-readme.txt" />
     <None Include="NativeLibraries\Bass\tags.dll" />
     <Content Include="NativeLibraries\faad\faad.exe">
