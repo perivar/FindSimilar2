@@ -83,9 +83,10 @@ namespace FindSimilar2.AudioProxies
 		int _sampleRate;
 		int _bitsPerSample;
 		int _channels;
-		int _channelSampleLength; // duration in samples
+		int _channelSampleLength; // duration in samples per channel
 		string _filePath; // file path in openfile
 		
+		// store the waveform data as IEEE 32 bit float
 		float[] _waveformData;
 		
 		bool _isInitialized = false;
@@ -93,12 +94,8 @@ namespace FindSimilar2.AudioProxies
 		
 		// playing from memory variables
 		const bool _doPlayFromMemory = false;
-		const bool _useBASSSampleCreateMode = false; // sample play mode instead of stream play (sample does not support looping parts)
-		const bool _isBassTempoMode = false; // mode that supports changing the tempo of a playing sample, used togeteher with SampleCreate mode
 		STREAMPROC _myStreamCreate; // make it global, so that the GC can not remove it
-		byte[] _data = null; // our local byte buffer, so that the GC can not remove it
-		MemoryStream _memStream = null;
-		int _waveformDataIndex = 0; // index in the waveform float array
+		int _dataBytePos; // play position in bytes when playing from memory
 		#endregion
 
 		#region Get Field Methods
@@ -124,6 +121,11 @@ namespace FindSimilar2.AudioProxies
 			get { return _bitsPerSample; }
 		}
 
+		public int BytesPerSample
+		{
+			get { return BitsPerSample / 8; }
+		}
+		
 		public int Channels
 		{
 			get { return _channels; }
@@ -264,7 +266,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="bitsPerSample">Output the Bits per sample of the wave file (must be either 8, 16, 24 or 32).</param>
 		/// <param name="channels">Output the Number of channels of the wave file (1=mono, 2=stereo...).</param>
 		/// <param name="byteLength">Output the Length of file in bytes</param>
-		/// <param name="sampleLength">Output the Length of file in samples</param>
+		/// <param name="sampleLength">Output the Length of file in samples per channel</param>
 		private static void GetChannelInformation(int channelHandle, out int sampleRate, out int bitsPerSample, out int channels, out long byteLength, out int sampleLength) {
 			
 			if (channelHandle != 0) {
@@ -276,8 +278,8 @@ namespace FindSimilar2.AudioProxies
 				// length in bytes
 				byteLength = Bass.BASS_ChannelGetLength(channelHandle, BASSMode.BASS_POS_BYTES);
 
-				// Get stream length in samples (float = 32 bits = 4 bytes)
-				sampleLength = (int) (byteLength / 4);
+				// Get stream length in samples per channel
+				sampleLength = (int) (byteLength / (bitsPerSample / 8 * channels));
 			} else {
 				sampleRate = -1;
 				bitsPerSample = -1;
@@ -297,17 +299,10 @@ namespace FindSimilar2.AudioProxies
 		private bool SetChannelSamplePosition(int channelHandle, int samplePosition) {
 			
 			// Set position using bytes
-			// (float = 32 bits = 4 bytes)
-			long bytePosition = (samplePosition * 4);
-
-			// TODO remove this
-			if (_memStream != null) {
-				_memStream.Position = bytePosition;
-			}
+			long bytePosition = (samplePosition * BytesPerSample * Channels);
 			
-			if (_doPlayFromMemory) {
-				_waveformDataIndex = samplePosition * _channels; // 2 channels
-			}
+			// Store the data byte position
+			_dataBytePos = (int) bytePosition;
 			
 			// try setting the position
 			if (!Bass.BASS_ChannelSetPosition(channelHandle, bytePosition, BASSMode.BASS_POS_BYTES)) {
@@ -332,23 +327,14 @@ namespace FindSimilar2.AudioProxies
 			int samplePosition = -1;
 			long bytePosition = -1;
 			
-			/*
-			// get position in bytes (float = 32 bits = 4 bytes)
-			if (false && _memStream != null) {
-				bytePosition = _memStream.Position;
+			if (_doPlayFromMemory) {
+				bytePosition = _dataBytePos; // TODO: this does not work well, thread issue?
 			} else {
 				bytePosition = Bass.BASS_ChannelGetPosition(channelHandle, BASSMode.BASS_POS_BYTES);
 			}
-			 */
-			bytePosition = Bass.BASS_ChannelGetPosition(channelHandle, BASSMode.BASS_POS_BYTES);
-			//bytePosition = _waveformDataIndex * _channels;
 			
 			if (bytePosition != -1) {
-				if (_doPlayFromMemory) {
-					samplePosition = (int) (bytePosition / _channels); // TODO why do I need /2 when using ReadFloat PROC
-				} else {
-					samplePosition = (int) (bytePosition / 4); // TODO why do I need /2 when using ReadFloat PROC
-				}
+				samplePosition = (int) (bytePosition / (BytesPerSample * Channels));
 			} else {
 				String errorCode = Bass.BASS_ErrorGetCode().ToString();
 			}
@@ -361,14 +347,14 @@ namespace FindSimilar2.AudioProxies
 				Bass.BASS_ChannelRemoveSync(_playingStream, _loopSyncId);
 
 			if ((endSamplePosition - startSamplePosition) > LOOP_THRESHOLD_SAMPLES) {
-				// length in bytes (float = 32 bits = 4 bytes)
-				long startPosition = (startSamplePosition * 4);
-				long endPosition = (endSamplePosition * 4);
+				// length in bytes
+				long startBytePosition = (startSamplePosition * BytesPerSample * Channels);
+				long endBytePosition = (endSamplePosition * BytesPerSample * Channels);
 				
 				// For Sample Accurate Looping set mixtime POS sync at loop end
 				_loopSyncId = Bass.BASS_ChannelSetSync(_playingStream,
 				                                       BASSSync.BASS_SYNC_POS | BASSSync.BASS_SYNC_MIXTIME,
-				                                       (long)endPosition,
+				                                       endBytePosition,
 				                                       _loopSyncProc,
 				                                       IntPtr.Zero);
 				
@@ -617,7 +603,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="bitsPerSample">Bits per sample of the wave file (must be either 8, 16, 24 or 32).</param>
 		/// <param name="channels">Number of channels of the wave file (1=mono, 2=stereo...).</param>
 		/// <param name="byteLength">Length of file in bytes</param>
-		/// <param name="sampleLength">Length of file in samples</param>
+		/// <param name="channelSampleLength">Length of file in samples per channel</param>
 		/// <returns>Array with multi channel data</returns>
 		/// <remarks>
 		/// Audio data will be structured in an array where each sucessive index
@@ -625,7 +611,7 @@ namespace FindSimilar2.AudioProxies
 		/// will be the first left level, index 1 will be the first right level, index
 		/// 2 will be the second left level, etc.
 		/// </remarks>
-		public static float[] ReadFromFile(string fileName, out int sampleRate, out int bitsPerSample, out int channels, out long byteLength, out int sampleLength) {
+		public static float[] ReadFromFile(string fileName, out int sampleRate, out int bitsPerSample, out int channels, out long byteLength, out int channelSampleLength) {
 			
 			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
 			// Use BASS_ChannelGetData(Int32, IntPtr, Int32) to retrieve decoded sample data.
@@ -648,7 +634,7 @@ namespace FindSimilar2.AudioProxies
 				}
 				
 				// read int the channel handle information
-				GetChannelInformation(mchan, out sampleRate, out bitsPerSample, out channels, out byteLength, out sampleLength);
+				GetChannelInformation(mchan, out sampleRate, out bitsPerSample, out channels, out byteLength, out channelSampleLength);
 				
 				// define float array
 				buffer = new float[byteLength/4];
@@ -681,9 +667,9 @@ namespace FindSimilar2.AudioProxies
 			int bitsPerSample = -1;
 			int channels = -1;
 			long byteLength = -1;
-			int sampleLength = -1;
+			int channelSampleLength = -1;
 			
-			return ReadFromFile(fileName, out sampleRate, out bitsPerSample, out channels, out byteLength, out sampleLength);
+			return ReadFromFile(fileName, out sampleRate, out bitsPerSample, out channels, out byteLength, out channelSampleLength);
 		}
 		
 		/// <summary>
@@ -1061,10 +1047,6 @@ namespace FindSimilar2.AudioProxies
 					_playingStream = 0;
 				}
 				
-				if (_memStream != null) {
-					_memStream.Dispose();
-				}
-				
 				_waveformData = null;
 				
 				//Bass.BASS_Free();
@@ -1083,14 +1065,17 @@ namespace FindSimilar2.AudioProxies
 		#endregion
 		
 		#region Bass Proc Methods when playing using memory
-		private int BASSReadFloatArray(int handle, IntPtr buffer, int length, IntPtr user)
+		private int BASSReadFloatArrayLoop(int handle, IntPtr buffer, int length, IntPtr user)
 		{
 			// here we need to deliver PCM sample data
 			if (length == 0 || buffer == IntPtr.Zero)
 				return 0;
 
+			// 32-bit floats in bytes
+			const int bytesPerSample = 4;
+			
 			// number of bytes in 32-bit floats, since length is in bytes
-			int l4 = length/4;
+			int l4 = length/bytesPerSample;
 			
 			// increase the data buffer as needed
 			var _floatData = new float[l4];
@@ -1098,54 +1083,52 @@ namespace FindSimilar2.AudioProxies
 			// copy from managed to unmanaged memory
 			Marshal.Copy(buffer, _floatData, 0, l4);
 
-			// Read from float array and copy to buffer
-			if (_waveformData.Length > _waveformDataIndex + l4) {
-				// copy the full segment into the float data buffer
-				Array.Copy(_waveformData, _waveformDataIndex, _floatData, 0, l4);
-				_waveformDataIndex += l4;
-			} else {
-				int remainingSamples = _waveformData.Length - _waveformDataIndex;
-				if (remainingSamples > 0) {
-					// copy the last segment into the float data buffer
-					Array.Copy(_waveformData, _waveformDataIndex, _floatData, 0, remainingSamples);
-					_waveformDataIndex += remainingSamples;
-					length = remainingSamples * 4;
-					l4 = remainingSamples;
-					length |= (int)BASSStreamProc.BASS_STREAMPROC_END;
-				} else {
-					// this should never happen
-					return 0;
+			// variables in bytes
+			int dataByteLen = _channelSampleLength * bytesPerSample * _channels; // its length
+			int loopByteStart = _loopSampleStart * bytesPerSample * _channels; // the loop start
+			int loopByteEnd = _loopSampleStop * bytesPerSample * _channels; // the loop stop
+			
+			int doneByteCount = 0;
+			do {
+				// limit amount of data to what's available
+				int byteCount = Math.Min(length-doneByteCount, dataByteLen-_dataBytePos);
+				
+				if (_loopSyncId != 0) {
+					byteCount = Math.Min(loopByteEnd-_dataBytePos, byteCount);
 				}
-			}
+				
+				// copy the segment into the float data buffer
+				if (byteCount > 0) {
+					Array.Copy(_waveformData, _dataBytePos / 4, _floatData, doneByteCount / 4, byteCount / 4);
 
-			// copy back from unmanaged to managed memory
-			Marshal.Copy(_floatData, 0, buffer, l4);
-			
-			return length;
-		}
-		
-		private int BASSReadMemoryStream(int handle, IntPtr buffer, int length, IntPtr user)
-		{
-			// here we need to deliver PCM sample data
-			if (length == 0 || buffer == IntPtr.Zero || _memStream == null)
-				return 0;
-			
-			// increase the data buffer as needed
-			if (_data == null || _data.Length < length)
-				_data = new byte[length];
-			
-			int bytesread = _memStream.Read( _data, 0, length );
+					// advance the position
+					_dataBytePos += byteCount;
 
-			Marshal.Copy( _data, 0, buffer, bytesread );
-			
-			if ( bytesread < length )
-			{
-				// set indicator flag
-				bytesread |= (int)BASSStreamProc.BASS_STREAMPROC_END;
-			}
-			return bytesread;
+					// store the bytes already processed
+					doneByteCount += byteCount;
+				}
+				
+				// if reached the end, loop
+				if (_dataBytePos == dataByteLen || _dataBytePos == loopByteEnd) {
+					if (_loopSyncId != 0) {
+						// this also ensure that the byteCount is never zero
+						_dataBytePos = loopByteStart;
+					} else {
+						// copy back from unmanaged to managed memory
+						Marshal.Copy(_floatData, 0, buffer, doneByteCount / 4);
+						doneByteCount |= (int)BASSStreamProc.BASS_STREAMPROC_END;
+						break;
+					}
+				}
+				
+			} while (doneByteCount < length);
+
+			// copy back from unmanaged to managed memory if we haven't already
+			// (BASS_STREAMPROC_END will make the number negative)
+			if (doneByteCount > 0) Marshal.Copy(_floatData, 0, buffer, doneByteCount / 4);
+
+			return doneByteCount;
 		}
-		
 		#endregion
 
 		#region Public Open and Save method
@@ -1169,98 +1152,38 @@ namespace FindSimilar2.AudioProxies
 				Bass.BASS_StreamFree(_playingStream);
 			}
 			
-			// reset waveform data index
-			_waveformDataIndex = 0;
+			// reset data byte position
+			_dataBytePos = 0;
 			
 			long byteLength = -1;
-			int sampleLength = -1;
-			WaveformData = ReadFromFile(path, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out sampleLength);
+			int channelSampleLength = -1;
+			WaveformData = ReadFromFile(path, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out channelSampleLength);
+			ChannelSampleLength = channelSampleLength; // Notify
 			
-			if (_useBASSSampleCreateMode) {
+			// Choose the stream procedure to use
+			_myStreamCreate = new STREAMPROC(BASSReadFloatArrayLoop);
+			
+			// Create playback stream
+			_playingStream = Bass.BASS_StreamCreate(_sampleRate, _channels, BASSFlag.BASS_SAMPLE_FLOAT, _myStreamCreate, IntPtr.Zero);
+			
+			if (_playingStream != 0) {
 				
-				// Use a Bass Sample to play the float array. Unfortunatly this doesn't support looping
-				int handle = Bass.BASS_SampleCreate(_waveformData.Length << 2, _sampleRate, _channels, 0xFFFF,
-				                                    BASSFlag.BASS_SAMPLE_FLOAT |
-				                                    BASSFlag.BASS_STREAM_DECODE
-				                                   );
+				// Set the stream to call Stop() when it ends.
+				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
+				                                          BASSSync.BASS_SYNC_END,
+				                                          0,
+				                                          _endTrackSyncProc,
+				                                          IntPtr.Zero);
 
-				if (handle != 0 && Bass.BASS_SampleSetData(handle, _waveformData)) {
-					if (_isBassTempoMode) {
-						_playingStream = Bass.BASS_StreamCreatePush(_sampleRate, _channels, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_FLOAT, IntPtr.Zero);
-						Bass.BASS_StreamPutData(_playingStream, _waveformData, _waveformData.Length << 2);
-						_playingStream = BassFx.BASS_FX_TempoCreate(_playingStream, BASSFlag.BASS_FX_FREESOURCE | BASSFlag.BASS_SAMPLE_FLOAT);
-
-						// set tempo percentage
-						float tempo = 50;
-						// http://ssproject2010.googlecode.com/svn/trunk/Project/SpeechSynthesis/SpeechSynthesis/IO/SoundDataReader.cs
-						Bass.BASS_ChannelSetAttribute(_playingStream, BASSAttribute.BASS_ATTRIB_TEMPO, tempo);
-					} else {
-						_playingStream = Bass.BASS_SampleGetChannel(handle, false);
-					}
-				}
+				if (syncHandle == 0)
+					throw new ArgumentException("Error establishing End Sync on file stream.", "path");
+				
+				_filePath = path;
+				CanPlay = true;
 			} else {
-				// http://www.un4seen.com/forum/?topic=13661.0
-				
-				// Bass.BASS_StreamCreatePush Method
-				// http://bass.radio42.com/help/html/d298e42b-bea8-9616-09de-e1d19af812df.htm
-				// https://github.com/Zhangerr/pulse/blob/master/Pulsecode/Audio/AudioManager.cs
-				
-				// Convert Float to PCM 16 Bit in order to create the Bass stream using
-				// BASSFlag.BASS_DEFAULT (16 Bit, stereo) in BASS_StreamCreate
-				//var pcm16bitData = new short[sampleLength];
-				//Accord.Audio.SampleConverter.Convert(_waveformData, pcm16bitData);
-				//_memStream = CommonUtils.BinaryFile.ShortArrayToMemoryStream(pcm16bitData);
-				
-				// Keep as IEEE 32 bit float. Have to use the BASSFlag.BASS_SAMPLE_FLOAT flag in BASS_StreamCreate
-				//_memStream = CommonUtils.BinaryFile.FloatArrayToMemoryStream(WaveformData);
-				
-				// Choose the stream procedure to use
-				//_myStreamCreate = new STREAMPROC(BASSReadMemoryStream);
-				_myStreamCreate = new STREAMPROC(BASSReadFloatArray);
-
-				// Example:
-				// int stream = Bass.BASS_StreamCreateFile(path, 0L, 0L, BASSFlag.BASS_SAMPLE_FLOAT | BASSFlag.BASS_STREAM_PRESCAN);
-				// BASS_STREAM_PRESCAN = Pre-scan the file for accurate seek points and length reading in
-				// 	MP3/MP2/MP1 files and chained OGG files (has no effect on normal OGG files).
-				// 	This can significantly increase the time taken to create the stream, particularly with a large file and/or slow storage media.
-				// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
-				// BASS_SAMPLE_FLOAT = Use 32-bit floating-point sample data.
-				// BASS_DEFAULT = 0 = default create stream: 16 Bit, stereo, no Float, hardware mixing, no Loop, no 3D, no speaker assignments...
-				
-				// Create playback stream
-				//_playingStream = Bass.BASS_StreamCreate(_sampleRate, _channels, BASSFlag.BASS_DEFAULT, _myStreamCreate, IntPtr.Zero);
-				_playingStream = Bass.BASS_StreamCreate(_sampleRate, _channels, BASSFlag.BASS_SAMPLE_FLOAT, _myStreamCreate, IntPtr.Zero);
-				
-				// IEEE 32 Bit float Push Stream
-				//_playingStream = Bass.BASS_StreamCreatePush(_sampleRate, _channels, BASSFlag.BASS_SAMPLE_FLOAT, IntPtr.Zero);
-				//Bass.BASS_StreamPutData(_playingStream, _waveformData, _waveformData.Length * 4);
-
-				// PCM 16 bit data Push Stream
-				//_playingStream = Bass.BASS_StreamCreatePush(_sampleRate, _channels, BASSFlag.BASS_DEFAULT, IntPtr.Zero);
-				//Bass.BASS_StreamPutData(_playingStream, pcm16bitData, pcm16bitData.Length * 2);
-				
-				if (_playingStream != 0) {
-					
-					// Set the stream to call Stop() when it ends.
-					int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
-					                                          BASSSync.BASS_SYNC_END,
-					                                          0,
-					                                          _endTrackSyncProc,
-					                                          IntPtr.Zero);
-
-					if (syncHandle == 0)
-						throw new ArgumentException("Error establishing End Sync on file stream.", "path");
-					
-					_filePath = path;
-					CanPlay = true;
-				} else {
-					CanPlay = false;
-					throw new Exception(Bass.BASS_ErrorGetCode().ToString());
-				}
+				CanPlay = false;
+				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
 			}
-			
-			// TODO: Why do I have to divide this by 2 when I use BASSReadProcMemoryStream or BASSReadProcFloatArray
-			ChannelSampleLength = sampleLength / _channels; // Notify
 		}
 		
 		public void OpenFileUsingFileStream(string path) {
@@ -1292,9 +1215,9 @@ namespace FindSimilar2.AudioProxies
 			if (_playingStream != 0) {
 				
 				long byteLength = -1;
-				int sampleLength = -1;
-				GetChannelInformation(_playingStream, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out sampleLength);
-				ChannelSampleLength = sampleLength; // Notify
+				int channelSampleLength = -1;
+				GetChannelInformation(_playingStream, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out channelSampleLength);
+				ChannelSampleLength = channelSampleLength; // Notify
 				
 				// Set the stream to call Stop() when it ends.
 				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
@@ -1440,7 +1363,7 @@ namespace FindSimilar2.AudioProxies
 		}
 		#endregion
 	}
-	
+
 	#region Wave Provider examples taken from NAudio
 	public abstract class WaveProvider32
 	{
@@ -1498,7 +1421,7 @@ namespace FindSimilar2.AudioProxies
 			return sampleCount;
 		}
 	}
-	
+
 	public class FloatProvider32 : WaveProvider32
 	{
 		float[] _data;
