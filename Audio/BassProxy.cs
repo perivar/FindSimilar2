@@ -3,6 +3,7 @@ using System.Collections.Generic;
 
 using System.Runtime.InteropServices; // GCHandle
 using System.IO; // Stream
+using System.Text; // Encoding
 
 using System.Diagnostics;
 
@@ -38,11 +39,11 @@ namespace FindSimilar2.AudioProxies
 		#region Fields
 		const int DEFAULT_SAMPLE_RATE = 44100; // Default sample rate used at initialization
 
+		// singleton instance
 		static BassProxy _instance;
 		
 		// Position variables
-		readonly Timer _positionTimer = new Timer(); // TODO: Can only make this work with the Windows.Form.Timer ?!
-		//readonly BASSTimer _positionTimer = new BASSTimer(); // This causes a crash if closing the form during playing
+		readonly Timer _positionTimer = new Timer();
 
 		int _currentChannelSamplePosition; // current position in playing stream in samples
 		bool _inChannelSet;
@@ -96,6 +97,7 @@ namespace FindSimilar2.AudioProxies
 		const bool _doPlayFromMemory = false;
 		STREAMPROC _myStreamCreate; // make it global, so that the GC can not remove it
 		int _dataBytePos; // play position in bytes when playing from memory
+		GCHandle _hGCFile; // make it global, so that the GC can not remove it
 		#endregion
 
 		#region Get Field Methods
@@ -290,6 +292,54 @@ namespace FindSimilar2.AudioProxies
 		}
 		
 		/// <summary>
+		/// Return the float data as a proper RIFF file in a byte array (IEEE 32 bit float format)
+		/// </summary>
+		/// <param name="data">The float array</param>
+		/// <param name="bitsPerSample">Bits per sample of the wave file (must be either 8, 16, 24 or 32).</param>
+		/// <param name="channels">The number of channels of the wave file (1=mono, 2=stereo...).</param>
+		/// <param name="sampleRate">The Sample rate of the wave file (e.g. 8000, 11025, 22050, 44100, 48000, 96000) in Hz./param>
+		/// <returns>Returns a proper RIFF file as a byte array</returns>
+		/// <remarks>Note! This must be modified to support anything else than 32 bit float</remarks>
+		private static byte[] GetRIFFFormat(float[] data, int bitsPerSample, int channels, int sampleRate) {
+			if (data == null || data.Length == 0) return null;
+			
+			int numSamples = data.Length << 2;
+			
+			using (var stream = new MemoryStream()) {
+				using (var wr = new BinaryWriter(stream)){
+					wr.Write(Encoding.ASCII.GetBytes("RIFF"));
+					wr.Write(36 + (int)(numSamples));
+					wr.Write(Encoding.ASCII.GetBytes("WAVE"));
+					
+					// write format chunk
+					wr.Write(Encoding.ASCII.GetBytes("fmt "));
+					wr.Write(16); // chunk size in bytes
+					
+					if (bitsPerSample == 8 || bitsPerSample == 16 || bitsPerSample == 24) {
+						wr.Write((ushort)1); // WAVE_FORMAT_PCM
+					} else if (bitsPerSample == 32) {
+						wr.Write((ushort)3); // IEEE 32 bit float encoding (WAVE_FORMAT_IEEE_FLOAT)
+					}
+					
+					wr.Write((short)channels); // channels
+					wr.Write((int)sampleRate); // sample rate
+					wr.Write((int)(sampleRate * bitsPerSample / 8 * channels)); // Average bytes per second
+					wr.Write((short)(bitsPerSample / 8 * channels)); // block align
+					wr.Write((short)(bitsPerSample)); // bits per sample
+					
+					// write data chunk
+					wr.Write(Encoding.ASCII.GetBytes("data"));
+					wr.Write((int)(numSamples));
+					foreach (var d in data) {
+						wr.Write((float)d);
+					}
+					
+					return stream.ToArray();
+				}
+			}
+		}
+		
+		/// <summary>
 		/// Sets the playback position of a stream.
 		/// </summary>
 		/// <param name="channelHandle">The channel handle</param>
@@ -327,11 +377,7 @@ namespace FindSimilar2.AudioProxies
 			int samplePosition = -1;
 			long bytePosition = -1;
 			
-			if (_doPlayFromMemory) {
-				bytePosition = _dataBytePos; // TODO: this does not work well, thread issue?
-			} else {
-				bytePosition = Bass.BASS_ChannelGetPosition(channelHandle, BASSMode.BASS_POS_BYTES);
-			}
+			bytePosition = Bass.BASS_ChannelGetPosition(channelHandle, BASSMode.BASS_POS_BYTES);
 			
 			if (bytePosition != -1) {
 				samplePosition = (int) (bytePosition / (BytesPerSample * Channels));
@@ -1050,6 +1096,12 @@ namespace FindSimilar2.AudioProxies
 				_waveformData = null;
 				
 				//Bass.BASS_Free();
+				
+				// when playback has ended and the pinned object is not needed anymore,
+				// we need to free the handle!
+				// Note: calling this method to early will crash the application,
+				// since the buffer would be stolen from BASS while still playing!
+				//_hGCFile.Free();
 			}
 			
 			_hasDisposed = true;
@@ -1132,16 +1184,16 @@ namespace FindSimilar2.AudioProxies
 		#endregion
 
 		#region Public Open and Save method
-		public void OpenFile(string path) {
+		public void OpenFile(string path, bool doPlayFromMemory = false) {
 			
-			if (_doPlayFromMemory) {
-				OpenFileUsingMemory(path);
+			if (doPlayFromMemory) {
+				OpenFileUsingMemoryAsFileStream(path);
 			} else {
 				OpenFileUsingFileStream(path);
 			}
 		}
 		
-		public void OpenFileUsingMemory(string path) {
+		public void OpenFileUsingMemoryAsStreamProc(string path) {
 
 			Stop();
 
@@ -1165,6 +1217,54 @@ namespace FindSimilar2.AudioProxies
 			
 			// Create playback stream
 			_playingStream = Bass.BASS_StreamCreate(_sampleRate, _channels, BASSFlag.BASS_SAMPLE_FLOAT, _myStreamCreate, IntPtr.Zero);
+			
+			if (_playingStream != 0) {
+				
+				// Set the stream to call Stop() when it ends.
+				int syncHandle = Bass.BASS_ChannelSetSync(_playingStream,
+				                                          BASSSync.BASS_SYNC_END,
+				                                          0,
+				                                          _endTrackSyncProc,
+				                                          IntPtr.Zero);
+
+				if (syncHandle == 0)
+					throw new ArgumentException("Error establishing End Sync on file stream.", "path");
+				
+				_filePath = path;
+				CanPlay = true;
+			} else {
+				CanPlay = false;
+				throw new Exception(Bass.BASS_ErrorGetCode().ToString());
+			}
+		}
+		
+		public void OpenFileUsingMemoryAsFileStream(string path) {
+
+			Stop();
+
+			if (_playingStream != 0)
+			{
+				ClearLoopRange();
+				ChannelSamplePosition = 0;
+				Bass.BASS_StreamFree(_playingStream);
+			}
+			
+			long byteLength = -1;
+			int channelSampleLength = -1;
+			WaveformData = ReadFromFile(path, out _sampleRate, out _bitsPerSample, out _channels, out byteLength, out channelSampleLength);
+			ChannelSampleLength = channelSampleLength; // Notify
+			//SaveFile("proper.wav");
+			
+			// convert to proper riff format
+			byte[] riffArray = GetRIFFFormat(_waveformData, _bitsPerSample, _channels, _sampleRate);
+			//CommonUtils.BinaryFile.ByteArrayToFile("test.wav", riffArray);
+			
+			// now create a pinned handle, so that the Garbage Collector will not move this object
+			_hGCFile = GCHandle.Alloc( riffArray, GCHandleType.Pinned );
+
+			// create the stream (AddrOfPinnedObject delivers the necessary IntPtr)
+			_playingStream = Bass.BASS_StreamCreateFile(_hGCFile.AddrOfPinnedObject(),
+			                                            0L, byteLength, BASSFlag.BASS_SAMPLE_FLOAT);
 			
 			if (_playingStream != 0) {
 				

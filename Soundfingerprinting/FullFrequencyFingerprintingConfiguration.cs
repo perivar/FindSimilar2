@@ -23,8 +23,8 @@
 			// Due to using this on many small samples, we need to reduce the window and overlap sizes
 			// A transient is around 50 ms
 			//WindowSize = 8192;
-			//WindowSize = 4096;
-			WindowSize = 2048;
+			WindowSize = 4096;
+			//WindowSize = 2048;
 			
 			// 11,6 ms	is 	64/5512		or	512/44100	or 372/32000
 			// The closest power of 2 in 2's complement format:
@@ -42,9 +42,6 @@
 			// 512 * 128 = 65536
 			FingerprintLength = 128;
 			SamplesPerFingerprint = FingerprintLength * Overlap;
-			
-			// (Originally this was 32, but 40 seems to work better with SCMS?!)
-			//LogBins = 40;
 			LogBins = 32;
 			
 			// Each fingerprint will be LogBins x FingerprintLength x 2 Bits long
@@ -60,7 +57,7 @@
 			// Using 32000 (instead of 44100) gives us a max of 16 khz resolution, which is OK for normal adult human hearing
 			SampleRate = 32000; 	// 5512 or 44100
 			//LogBase = 2; 			// Math.E, 2 or 10;
-			LogBase = Math.E; 		// Math.E, 2 or 10; (The spectrogram drawing methods seem to use Math.E) 
+			LogBase = Math.E; 		// Math.E, 2 or 10; (The spectrogram drawing methods seem to use Math.E)
 			
 			// In Content Fingerprinting Using Wavelets, a static 928 ms stride was used in database creation,
 			// and a random 0-46 ms stride was used in querying (random stride was used in order to minimize the coarse effect of unlucky time alignment).
