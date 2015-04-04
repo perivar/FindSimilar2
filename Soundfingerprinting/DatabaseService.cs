@@ -14,6 +14,9 @@ namespace Soundfingerprinting.DbStorage
 	// heavily modified by perivar@nerseth.com
 	public class DatabaseService
 	{
+		// performance:
+		// http://stackoverflow.com/questions/4356363/sqlite-net-performance-how-to-speed-up-things
+		
 		private string dbFilePath;
 
 		IDbConnection dbcon;
@@ -72,20 +75,48 @@ namespace Soundfingerprinting.DbStorage
 			var connBuilder = new SQLiteConnectionStringBuilder();
 			connBuilder.DataSource = dbFilePath;
 			connBuilder.Version = 3;
-			connBuilder.PageSize = 4096; //Set page size to NTFS cluster size = 4096 bytes
-			connBuilder.CacheSize = 10000;
-			connBuilder.Pooling = true;
-			connBuilder.LegacyFormat = false;
-			connBuilder.DefaultTimeout = 500;
+			connBuilder.PageSize = 4096; 	// set page size to NTFS cluster size = 4096 bytes
+			connBuilder.CacheSize = 10000; 	// cache size in bytes
 			
-			// http://devlights.hatenablog.com/entry/2014/02/01/151642
-			// According to that guy: Sync Mode: off and Journal: Wal are best
-			connBuilder.SyncMode = SynchronizationModes.Off;
+			// Do not use the inbuilt connection pooling of System.Data.SQLite
+			// We use our own connection pool which is faster.
+			connBuilder.Pooling = true;
+			
+			// false = Use the newer 3.3x database format which compresses numbers more effectively
+			connBuilder.LegacyFormat = false;
+			
+			// The default command timeout in seconds
+			connBuilder.DefaultTimeout = 30;
+			
+			// SQLite supports this, but it has to be enabled for each database connection by a PRAGMA command
+			// For details see http://www.sqlite.org/foreignkeys.html
+			connBuilder.ForeignKeys = false;
+			
+			// Automatically create the database if it does not exist
+			connBuilder.FailIfMissing = false;
+			
+			// Store GUIDs as binaries, not as string
+			// Saves some space in the database and is said to make search queries on GUIDs faster
+			connBuilder.BinaryGUID = true;
+			
+			// Sychronization Mode "Normal" enables parallel database access while at the same time preventing database
+			// corruption and is therefore a good compromise between "Off" (more performance) and "On"
+			// More information can be found here: http://www.sqlite.org/pragma.html#pragma_synchronous
+			connBuilder.SyncMode = SynchronizationModes.Normal;
+			
+			// Use the Write Ahead Log mode
+			// In this journal mode write locks do not block reads
+			// More information can be found here: http://www.sqlite.org/wal.html
 			connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
 			
-			// according this this guy, this is best
+			
+			// Best performance settings
+			// http://devlights.hatenablog.com/entry/2014/02/01/151642
+			// According to that guy: Sync Mode: off and Journal: Wal are best
+
+			// And according this this guy, this is best
 			// http://stackoverflow.com/questions/784173/what-are-the-performance-characteristics-of-sqlite-with-very-large-database-file
-			//PRAGMA main.page_size = 4096;
+			//PRAGMA main.page_size=4096;
 			//PRAGMA main.cache_size=10000;
 			//PRAGMA main.locking_mode=EXCLUSIVE;
 			//PRAGMA main.synchronous=NORMAL;
@@ -93,6 +124,10 @@ namespace Soundfingerprinting.DbStorage
 			
 			// also check this
 			// http://stackoverflow.com/questions/15383615/multiple-access-to-a-single-sqlite-database-file-via-system-data-sqlite-and-c-sh
+			
+			// and this
+			// https://github.com/MediaPortal/MediaPortal-2/blob/master/MediaPortal/Incubator/SQLiteDatabase/ConnectionPool.cs
+			
 			
 			return (IDbConnection) new SQLiteConnection(connBuilder.ToString());
 		}
