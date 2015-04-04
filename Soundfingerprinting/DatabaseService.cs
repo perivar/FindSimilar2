@@ -2,7 +2,6 @@
 using System.Data;
 using System.Data.SQLite;
 using System.IO;
-using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using Soundfingerprinting.Dao.Entities;
@@ -11,9 +10,12 @@ using Soundfingerprinting.DbStorage.Entities;
 namespace Soundfingerprinting.DbStorage
 {
 	// SQL Lite database class
-	// perivar@nerseth.com
+	// Original idea/class from Soundfingerprinting Project
+	// heavily modified by perivar@nerseth.com
 	public class DatabaseService
 	{
+		private string dbFilePath;
+
 		IDbConnection dbcon;
 
 		// singleton instance
@@ -39,22 +41,113 @@ namespace Soundfingerprinting.DbStorage
 		{
 			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 			string dbdir = Path.Combine(homedir,".findsimilar");
-			string dbfile = Path.Combine(dbdir, "findsimilar.db");
-			string sqlite = string.Format("Data Source={0};Version=3;", dbfile);
-			sqlite += "Count Changes=off;Journal Mode=off;";
-			sqlite += "Pooling=true;Cache Size=10000;Page Size=4096;Synchronous=off";
+			dbFilePath = Path.Combine(dbdir, "findsimilar.db");
 			
-			if (!Directory.Exists(dbdir)) {
-				Directory.CreateDirectory(dbdir);
+			bool doResetDatabase = false;
+			if (!File.Exists(dbFilePath)) {
+				CreateDB(dbFilePath);
+				doResetDatabase = true;
 			}
 			
-			dbcon = (IDbConnection) new SQLiteConnection(sqlite);
+			// open up the connection
+			dbcon = GetConnection(dbFilePath);
 			dbcon.Open();
+
+			if (doResetDatabase) {
+				AddDatabaseTables();
+			}
 		}
 		
 		~DatabaseService()
 		{
+			// removed this because is caused a already disposed exception
+			//dbcon.Close();
+		}
+
+		#endregion
+		
+		#region Public static methods
+		public static IDbConnection GetConnection(string dbFilePath) {
+			
+			var connBuilder = new SQLiteConnectionStringBuilder();
+			connBuilder.DataSource = dbFilePath;
+			connBuilder.Version = 3;
+			connBuilder.PageSize = 4096; //Set page size to NTFS cluster size = 4096 bytes
+			connBuilder.CacheSize = 10000;
+			connBuilder.Pooling = true;
+			connBuilder.LegacyFormat = false;
+			connBuilder.DefaultTimeout = 500;
+			
+			// http://devlights.hatenablog.com/entry/2014/02/01/151642
+			// According to that guy: Sync Mode: off and Journal: Wal are best
+			connBuilder.SyncMode = SynchronizationModes.Off;
+			connBuilder.JournalMode = SQLiteJournalModeEnum.Wal;
+			
+			// according this this guy, this is best
+			// http://stackoverflow.com/questions/784173/what-are-the-performance-characteristics-of-sqlite-with-very-large-database-file
+			//PRAGMA main.page_size = 4096;
+			//PRAGMA main.cache_size=10000;
+			//PRAGMA main.locking_mode=EXCLUSIVE;
+			//PRAGMA main.synchronous=NORMAL;
+			//PRAGMA main.journal_mode=WAL;
+			
+			// also check this
+			// http://stackoverflow.com/questions/15383615/multiple-access-to-a-single-sqlite-database-file-via-system-data-sqlite-and-c-sh
+			
+			return (IDbConnection) new SQLiteConnection(connBuilder.ToString());
+		}
+		
+		public static void CreateDB(string dbFilePath)
+		{
+			if (!Directory.Exists(Path.GetDirectoryName(dbFilePath))) {
+				Directory.CreateDirectory(Path.GetDirectoryName(dbFilePath));
+			}
+			if (!File.Exists(dbFilePath)) {
+				SQLiteConnection.CreateFile(dbFilePath);
+			}
+		}
+		
+		private static void DeleteDB(string dbFilePath)
+		{
+			if (File.Exists(dbFilePath)) {
+				File.Delete(dbFilePath);
+			}
+		}
+
+		public static void MoveDB(string dbOldFilePath, string dbNewFilePath)
+		{
+			if (File.Exists(dbOldFilePath)) {
+				File.Move(dbOldFilePath, dbNewFilePath);
+			}
+		}
+		#endregion
+		
+		#region Reset Database methods
+		public void ResetDatabase() {
+			// ensure the sqlite doesn't keep a lock to the database as we are trying to delete it
 			dbcon.Close();
+			dbcon.Dispose();
+			GC.Collect();
+			GC.WaitForPendingFinalizers();
+			
+			DeleteDB(dbFilePath);
+			
+			CreateDB(dbFilePath);
+
+			// reset the connection
+			dbcon = GetConnection(dbFilePath);
+			dbcon.Open();
+			
+			AddDatabaseTables();
+		}
+		
+		public void AddDatabaseTables() {
+			using (var transaction = dbcon.BeginTransaction()) {
+				AddFingerprintTable();
+				AddHashBinTable();
+				AddTrackTable();
+				transaction.Commit();
+			}
 		}
 		#endregion
 		
@@ -192,7 +285,6 @@ namespace Soundfingerprinting.DbStorage
 			
 			try {
 				dbcmd.Prepare();
-				//dbcmd.ExecuteNonQuery();
 				fingerprint.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
 				dbcmd.Dispose();
 			} catch (Exception e) {
@@ -229,7 +321,6 @@ namespace Soundfingerprinting.DbStorage
 							dbTotalFingerprintsParam.Value = fingerprint.TotalFingerprintsPerTrack = count;
 							dbSignatureParam.Value = BoolToByte(fingerprint.Signature);
 
-							//dbcmd.ExecuteNonQuery();
 							fingerprint.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
 						}
 						transaction.Commit();
@@ -439,7 +530,6 @@ namespace Soundfingerprinting.DbStorage
 		public IDictionary<Track, int> ReadDuplicatedTracks()
 		{
 			throw new NotImplementedException();
-			//return trackDao.ReadDuplicatedTracks();
 		}
 		
 		public IList<Fingerprint> ReadFingerprints()
@@ -456,7 +546,7 @@ namespace Soundfingerprinting.DbStorage
 
 			IDataReader reader = dbcmd.ExecuteReader();
 			while (reader.Read()) {
-				Fingerprint fingerprint = new Fingerprint();
+				var fingerprint = new Fingerprint();
 				fingerprint.Id = reader.GetInt32(0);
 				fingerprint.TrackId = reader.GetInt32(1);
 				fingerprint.SongOrder = reader.GetInt32(2);
@@ -486,7 +576,7 @@ namespace Soundfingerprinting.DbStorage
 
 			IDataReader reader = dbcmd.ExecuteReader();
 			while (reader.Read()) {
-				Fingerprint fingerprint = new Fingerprint();
+				var fingerprint = new Fingerprint();
 				fingerprint.Id = reader.GetInt32(0);
 				fingerprint.TrackId = trackId;
 				fingerprint.SongOrder = reader.GetInt32(1);
@@ -521,7 +611,7 @@ namespace Soundfingerprinting.DbStorage
 			
 			int lastTrackId = -1;
 			while (reader.Read()) {
-				Fingerprint fingerprint = new Fingerprint();
+				var fingerprint = new Fingerprint();
 				fingerprint.Id = reader.GetInt32(0);
 				fingerprint.TrackId = reader.GetInt32(1);
 				fingerprint.SongOrder = reader.GetInt32(2);
@@ -546,8 +636,6 @@ namespace Soundfingerprinting.DbStorage
 			reader.Close();
 			dbcmd.Dispose();
 			return result;
-			
-			//return fingerprintDao.ReadFingerprintsByMultipleTrackId(tracks, numberOfFingerprintsToRead);
 		}
 
 		public Fingerprint ReadFingerprintById(int id)
@@ -567,7 +655,7 @@ namespace Soundfingerprinting.DbStorage
 				return null;
 			}
 			
-			Fingerprint fingerprint = new Fingerprint();
+			var fingerprint = new Fingerprint();
 			fingerprint.Id = id;
 			fingerprint.TrackId = reader.GetInt32(0);
 			fingerprint.SongOrder = reader.GetInt32(1);
@@ -597,7 +685,7 @@ namespace Soundfingerprinting.DbStorage
 
 			IDataReader reader = dbcmd.ExecuteReader();
 			while (reader.Read()) {
-				Fingerprint fingerprint = new Fingerprint();
+				var fingerprint = new Fingerprint();
 				fingerprint.Id = reader.GetInt32(0);
 				fingerprint.TrackId = reader.GetInt32(1);
 				fingerprint.SongOrder = reader.GetInt32(2);
@@ -647,7 +735,7 @@ namespace Soundfingerprinting.DbStorage
 
 			IDataReader reader = dbcmd.ExecuteReader();
 			while (reader.Read()) {
-				Track track = new Track();
+				var track = new Track();
 				track.Id = reader.GetInt32(0);
 				track.AlbumId = reader.GetInt32(1);
 				track.TrackLengthMs = reader.GetInt32(2);
@@ -674,7 +762,7 @@ namespace Soundfingerprinting.DbStorage
 			}
 
 			string query = "SELECT id, albumid, length, artist, title, filepath FROM [tracks]";
-			if (whereClause != null && whereClause != "") {
+			if (!string.IsNullOrEmpty(whereClause)) {
 				query = string.Format("{0} {1}", query, whereClause);
 			}
 			
@@ -683,7 +771,7 @@ namespace Soundfingerprinting.DbStorage
 
 			IDataReader reader = dbcmd.ExecuteReader();
 			while (reader.Read()) {
-				Track track = new Track();
+				var track = new Track();
 				track.Id = reader.GetInt32(0);
 				track.AlbumId = reader.GetInt32(1);
 				track.TrackLengthMs = reader.GetInt32(2);
@@ -717,7 +805,7 @@ namespace Soundfingerprinting.DbStorage
 				return null;
 			}
 			
-			Track track = new Track();
+			var track = new Track();
 			track.Id = id;
 			track.AlbumId = reader.GetInt32(0);
 			track.TrackLengthMs = reader.GetInt32(1);
@@ -750,7 +838,7 @@ namespace Soundfingerprinting.DbStorage
 
 			IDataReader reader = dbcmd.ExecuteReader();
 			while (reader.Read()) {
-				Track track = new Track();
+				var track = new Track();
 				track.Id = reader.GetInt32(0);
 				track.AlbumId = reader.GetInt32(1);
 				track.TrackLengthMs = reader.GetInt32(2);
@@ -853,7 +941,7 @@ namespace Soundfingerprinting.DbStorage
 			
 			IDataReader reader = dbcmd.ExecuteReader();
 			while (reader.Read()) {
-				HashBinMinHash hash = new HashBinMinHash();
+				var hash = new HashBinMinHash();
 				hash.Id = reader.GetInt32(0);
 				hash.Bin = reader.GetInt64(1);
 				hash.HashTable = reader.GetInt32(2);
@@ -941,7 +1029,7 @@ namespace Soundfingerprinting.DbStorage
 		#region Private Static Utils
 		private static bool[] ByteToBool(byte[] byteArray) {
 			// basic - same count
-			bool[] boolArray = new bool[byteArray.Length];
+			var boolArray = new bool[byteArray.Length];
 			for (int i = 0; i < byteArray.Length; i++) {
 				boolArray[i] = (byteArray[i] == 1 ? true: false);
 			}

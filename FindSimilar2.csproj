@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>FindSimilar2</RootNamespace>
     <AssemblyName>FindSimilar2</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5.1</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <NoWin32Manifest>False</NoWin32Manifest>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -35,7 +35,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
     <StartAction>Project</StartAction>
-    <StartArguments>-gui</StartArguments>
+    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -resetdb</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -46,6 +46,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <StartAction>Project</StartAction>
     <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -resetdb</StartArguments>
+    <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
@@ -197,21 +198,12 @@
     <None Include="NativeLibraries\Bass\bass_tta.txt" />
     <None Include="NativeLibraries\Bass\tags-readme.txt" />
     <None Include="NativeLibraries\Bass\tags.dll" />
-    <Content Include="NativeLibraries\faad\faad.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NativeLibraries\ffmpeg\ffmpeg.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NativeLibraries\ffmpeg\ffplay.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NativeLibraries\lame\lame.exe">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NativeLibraries\lame\lame_enc.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <None Include="NativeLibraries\faad\faad.exe" />
+    <None Include="NativeLibraries\ffmpeg\ffmpeg.exe" />
+    <None Include="NativeLibraries\ffmpeg\ffplay.exe" />
+    <None Include="NativeLibraries\lame\lame.exe" />
+    <None Include="NativeLibraries\lame\lame.txt" />
+    <None Include="NativeLibraries\lame\lame_enc.dll" />
     <None Include="NativeLibraries\libfftw\bench.exe" />
     <None Include="NativeLibraries\libfftw\benchf.exe" />
     <None Include="NativeLibraries\libfftw\benchl.exe" />
@@ -237,45 +229,55 @@
     <None Include="NativeLibraries\libfftw\README-WINDOWS" />
     <None Include="NativeLibraries\mplayer\License.txt" />
     <None Include="NativeLibraries\mplayer\mencoder.exe">
-      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <Content Include="NativeLibraries\mplayer\mplayer.exe">
+    <None Include="NativeLibraries\mplayer\mplayer.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
     <None Include="NativeLibraries\mplayer\MPlayer.html" />
-    <None Include="NativeLibraries\mplayer\mplayer\config" />
-    <None Include="NativeLibraries\mplayer\Readme.txt" />
-    <Content Include="NativeLibraries\mplayer\vorbis.acm">
+    <None Include="NativeLibraries\mplayer\mplayer\config">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
+    <None Include="NativeLibraries\mplayer\Readme.txt" />
+    <None Include="NativeLibraries\mplayer\vorbis.acm">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="NativeLibraries\NAudio\license.txt" />
     <None Include="NativeLibraries\NAudio\NAudio.dll" />
     <None Include="NativeLibraries\NAudio\NAudio.WindowsMediaFormat.dll" />
     <None Include="NativeLibraries\NAudio\NAudio.xml" />
     <None Include="NativeLibraries\NAudio\readme.txt" />
+    <None Include="NativeLibraries\oggenc2\oggenc2.exe" />
+    <None Include="NativeLibraries\oggenc2\oggenc2.txt" />
     <None Include="NativeLibraries\sox\batch-example.bat" />
     <None Include="NativeLibraries\sox\ChangeLog.txt" />
     <None Include="NativeLibraries\sox\LICENSE.GPL.txt" />
-    <None Include="NativeLibraries\sox\pthreadgc2.dll" />
+    <None Include="NativeLibraries\sox\pthreadgc2.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="NativeLibraries\sox\README.txt" />
     <None Include="NativeLibraries\sox\README.win32.txt" />
-    <Content Include="NativeLibraries\sox\sox.exe">
+    <None Include="NativeLibraries\sox\sox.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
     <None Include="NativeLibraries\sox\sox.pdf" />
     <None Include="NativeLibraries\sox\soxformat.pdf" />
     <None Include="NativeLibraries\sox\soxi.pdf" />
-    <Content Include="NativeLibraries\sox\wget.exe">
+    <None Include="NativeLibraries\sox\wget.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NativeLibraries\sox\wget.ini">
+    </None>
+    <None Include="NativeLibraries\sox\wget.ini">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="NativeLibraries\sox\zlib1.dll">
+    </None>
+    <None Include="NativeLibraries\sox\zlib1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    </None>
+    <None Include="NativeLibraries\SQLite\README.txt" />
     <None Include="NativeLibraries\SQLite\System.Data.SQLite.dll" />
+    <None Include="NativeLibraries\SQLite\System.Data.SQLite.EF6.dll" />
     <None Include="NativeLibraries\SQLite\System.Data.SQLite.Linq.dll" />
+    <None Include="NativeLibraries\SQLite\x64\SQLite.Interop.dll" />
+    <None Include="NativeLibraries\SQLite\x86\SQLite.Interop.dll" />
     <None Include="NativeLibraries\ZedGraph\ZedGraph.dll" />
     <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
     <None Include="README.md" />
@@ -297,8 +299,11 @@
     <Folder Include="NativeLibraries\mplayer" />
     <Folder Include="NativeLibraries\mplayer\mplayer" />
     <Folder Include="NativeLibraries\NAudio" />
+    <Folder Include="NativeLibraries\oggenc2" />
     <Folder Include="NativeLibraries\sox" />
     <Folder Include="NativeLibraries\SQLite" />
+    <Folder Include="NativeLibraries\SQLite\x64" />
+    <Folder Include="NativeLibraries\SQLite\x86" />
     <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="Soundfingerprinting" />
   </ItemGroup>
@@ -321,7 +326,8 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>copy "$(ProjectDir)NativeLibraries\Bass\*.dll" "$(TargetDir)"
-copy "$(ProjectDir)NativeLibraries\libfftw\*.dll" "$(TargetDir)"</PreBuildEvent>
+    <PreBuildEvent>xcopy /ey "$(ProjectDir)NativeLibraries\Bass\*.dll" "$(TargetDir)"
+xcopy /ey "$(ProjectDir)NativeLibraries\libfftw\*.dll" "$(TargetDir)" 
+xcopy /ey "$(ProjectDir)NativeLibraries\SQLite\*.dll" "$(TargetDir)"</PreBuildEvent>
   </PropertyGroup>
 </Project>

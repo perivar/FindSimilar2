@@ -297,7 +297,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="data">The float array</param>
 		/// <param name="bitsPerSample">Bits per sample of the wave file (must be either 8, 16, 24 or 32).</param>
 		/// <param name="channels">The number of channels of the wave file (1=mono, 2=stereo...).</param>
-		/// <param name="sampleRate">The Sample rate of the wave file (e.g. 8000, 11025, 22050, 44100, 48000, 96000) in Hz./param>
+		/// <param name="sampleRate">The Sample rate of the wave file (e.g. 8000, 11025, 22050, 44100, 48000, 96000) in Hz.</param>
 		/// <returns>Returns a proper RIFF file as a byte array</returns>
 		/// <remarks>Note! This must be modified to support anything else than 32 bit float</remarks>
 		private static byte[] GetRIFFFormat(float[] data, int bitsPerSample, int channels, int sampleRate) {
@@ -344,7 +344,6 @@ namespace FindSimilar2.AudioProxies
 		/// </summary>
 		/// <param name="channelHandle">The channel handle</param>
 		/// <param name="samplePosition">The sample position</param>
-		/// <param name="memStream">A memory stream</param>
 		/// <returns>If successful, then TRUE is returned, else FALSE is returned.</returns>
 		private bool SetChannelSamplePosition(int channelHandle, int samplePosition) {
 			
@@ -371,7 +370,6 @@ namespace FindSimilar2.AudioProxies
 		/// Retrieves the playback position of a stream
 		/// </summary>
 		/// <param name="channelHandle">The channel handle</param>
-		/// <param name="memStream">A memory stream</param>
 		/// <returns>If successful, then the channel's position is returned, else -1 is returned.</returns>
 		private int GetChannelSamplePosition(int channelHandle) {
 			int samplePosition = -1;

@@ -200,13 +200,7 @@ namespace FindSimilar2
 				if (scanPath != "") {
 					if (IOUtils.IsDirectory(scanPath)) {
 						if (resetdb) {
-							// AudioFingerprinting
-							databaseService.RemoveFingerprintTable();
-							databaseService.AddFingerprintTable();
-							databaseService.RemoveHashBinTable();
-							databaseService.AddHashBinTable();
-							databaseService.RemoveTrackTable();
-							databaseService.AddTrackTable();
+							databaseService.ResetDatabase();
 						}
 						Console.WriteLine("FindSimilar. Version {0}.", VERSION);
 						ScanDirectory(scanPath, repository, skipDurationAboveSeconds, silent);
