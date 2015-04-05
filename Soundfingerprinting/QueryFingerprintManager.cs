@@ -1,17 +1,17 @@
-﻿namespace Soundfingerprinting.SoundTools
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.Linq;
+
+using Soundfingerprinting.Dao.Entities;
+using Soundfingerprinting.DbStorage;
+using Soundfingerprinting.DbStorage.Entities;
+using Soundfingerprinting.Hashing;
+
+using FindSimilar2; // splash screen
+
+namespace Soundfingerprinting.SoundTools
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Diagnostics;
-	using System.Linq;
-
-	using Soundfingerprinting.Dao.Entities;
-	using Soundfingerprinting.DbStorage;
-	using Soundfingerprinting.DbStorage.Entities;
-	using Soundfingerprinting.Hashing;
-	
-	using FindSimilar2; // splash screen
-
 	public static class QueryFingerprintManager
 	{
 		/// <summary>

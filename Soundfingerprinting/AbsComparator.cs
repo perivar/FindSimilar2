@@ -1,8 +1,8 @@
+using System;
+using System.Collections.Generic;
+
 namespace Soundfingerprinting.Fingerprinting
 {
-	using System;
-	using System.Collections.Generic;
-
 	public class AbsComparator : IComparer<double>
 	{
 		#region IComparer<double> Members

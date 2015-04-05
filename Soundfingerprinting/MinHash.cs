@@ -1,8 +1,8 @@
-﻿namespace Soundfingerprinting.Hashing
-{
-	using System;
-	using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
+namespace Soundfingerprinting.Hashing
+{
 	public class MinHash : IHashingService<bool[], int[]>
 	{
 		/// <summary>

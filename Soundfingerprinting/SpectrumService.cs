@@ -1,10 +1,10 @@
-﻿namespace Soundfingerprinting.Fingerprinting.FFT
+﻿using System;
+using System.Collections.Generic;
+
+using Soundfingerprinting.Audio.Strides;
+
+namespace Soundfingerprinting.Fingerprinting.FFT
 {
-	using System;
-	using System.Collections.Generic;
-
-	using Soundfingerprinting.Audio.Strides;
-
 	public class SpectrumService
 	{
 		/// <summary>

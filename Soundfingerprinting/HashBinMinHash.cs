@@ -1,9 +1,7 @@
-﻿namespace Soundfingerprinting.Dao.Entities
+﻿using System;
+
+namespace Soundfingerprinting.Dao.Entities
 {
-	using System;
-
-	using Soundfingerprinting.DbStorage.Entities;
-
 	/// <summary>
 	///   Bin for Min-Hash + LSH schema
 	/// </summary>

@@ -1,18 +1,18 @@
+using System.Collections.Generic;
+using System.Linq;
+
+using Soundfingerprinting.Audio.Models;
+using Soundfingerprinting.Audio.Services;
+using Soundfingerprinting.Audio.Strides;
+using Soundfingerprinting.Fingerprinting.FFT;
+using Soundfingerprinting.Fingerprinting.Wavelets;
+using Soundfingerprinting.Fingerprinting.WorkUnitBuilder;
+using Soundfingerprinting.Fingerprinting.Configuration;
+
+using Mirage; // debug
+
 namespace Soundfingerprinting.Fingerprinting
 {
-	using System.Collections.Generic;
-	using System.Linq;
-
-	using Soundfingerprinting.Audio.Models;
-	using Soundfingerprinting.Audio.Services;
-	using Soundfingerprinting.Audio.Strides;
-	using Soundfingerprinting.Fingerprinting.FFT;
-	using Soundfingerprinting.Fingerprinting.Wavelets;
-	using Soundfingerprinting.Fingerprinting.WorkUnitBuilder;
-	using Soundfingerprinting.Fingerprinting.Configuration;
-
-	using Mirage; // debug
-	
 	public class FingerprintService
 	{
 		public readonly SpectrumService SpectrumService;

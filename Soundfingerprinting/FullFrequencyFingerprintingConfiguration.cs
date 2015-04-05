@@ -1,9 +1,9 @@
-﻿namespace Soundfingerprinting.Fingerprinting.Configuration
-{
-	using System;
-	using Soundfingerprinting.Audio.Strides;
-	using Mirage;
+﻿using System;
+using Soundfingerprinting.Audio.Strides;
+using Mirage; // IWindowFunction
 
+namespace Soundfingerprinting.Fingerprinting.Configuration
+{
 	public class FullFrequencyFingerprintingConfiguration : IFingerprintingConfiguration
 	{
 		public FullFrequencyFingerprintingConfiguration(bool useRandomStride = false)

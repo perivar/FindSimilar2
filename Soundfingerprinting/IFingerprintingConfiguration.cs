@@ -1,8 +1,8 @@
+using Soundfingerprinting.Audio.Strides;
+using Mirage;
+
 namespace Soundfingerprinting.Fingerprinting.Configuration
 {
-	using Soundfingerprinting.Audio.Strides;
-	using Mirage;
-
 	public interface IFingerprintingConfiguration
 	{
 		/// <summary>

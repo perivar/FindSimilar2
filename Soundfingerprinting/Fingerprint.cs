@@ -1,6 +1,7 @@
-﻿namespace Soundfingerprinting.DbStorage.Entities
+﻿using System;
+
+namespace Soundfingerprinting.DbStorage.Entities
 {
-	using System;
 
 	[Serializable]
 	public class Fingerprint
@@ -69,6 +70,6 @@
 		
 		public override string ToString() {
 			return String.Format("id: {0}, trackid: {1}, songorder: {2}, total fingerprints: {3}", Id, TrackId, SongOrder, TotalFingerprintsPerTrack);
-		}	
+		}
 	}
 }

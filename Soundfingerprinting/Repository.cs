@@ -1,23 +1,23 @@
-﻿namespace Soundfingerprinting
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+
+using Soundfingerprinting.Fingerprinting;
+using Soundfingerprinting.Fingerprinting.WorkUnitBuilder;
+using Soundfingerprinting.Hashing;
+
+using Soundfingerprinting.Dao.Entities;
+using Soundfingerprinting.DbStorage;
+using Soundfingerprinting.DbStorage.Entities;
+
+using Soundfingerprinting.SoundTools;
+
+using Mirage;
+
+using FindSimilar2; // SplashScreen and QueryResults
+
+namespace Soundfingerprinting
 {
-	using System;
-	using System.Collections.Generic;
-	using System.Linq;
-
-	using Soundfingerprinting.Fingerprinting;
-	using Soundfingerprinting.Fingerprinting.WorkUnitBuilder;
-	using Soundfingerprinting.Hashing;
-	
-	using Soundfingerprinting.Dao.Entities;
-	using Soundfingerprinting.DbStorage;
-	using Soundfingerprinting.DbStorage.Entities;
-	
-	using Soundfingerprinting.SoundTools;
-	
-	using Mirage;
-
-	using FindSimilar2; // SplashScreen and QueryResults
-	
 	/// <summary>
 	/// Singleton class for repository container
 	/// </summary>

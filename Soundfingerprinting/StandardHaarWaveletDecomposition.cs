@@ -1,8 +1,7 @@
-﻿namespace Soundfingerprinting.Fingerprinting.Wavelets
-{
-	using System;
-	using System.Diagnostics.CodeAnalysis;
+﻿using System;
 
+namespace Soundfingerprinting.Fingerprinting.Wavelets
+{
 	/// <summary>
 	///   Standart Haar wavelet decomposition algorithm.
 	///   According to Fast Multi-Resolution Image Query paper, Haar wavelet decomposition with standard basis function works better in image querying
@@ -10,7 +9,6 @@
 	/// <remarks>
 	/// Implemented according to the algorithm found here http://grail.cs.washington.edu/projects/wavelets/article/wavelet1.pdf
 	/// </remarks>
-	[SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "Reviewed. Suppression is OK here.")]
 	public class StandardHaarWaveletDecomposition : HaarWaveletDecomposition
 	{
 		#region IWaveletDecomposition Members

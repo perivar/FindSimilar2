@@ -5,7 +5,6 @@
 // http://www.codeproject.com/Articles/206507/Duplicates-detector-via-audio-fingerprinting
 
 using System;
-using System.Diagnostics;
 using System.Linq;
 
 namespace Soundfingerprinting.Fingerprinting

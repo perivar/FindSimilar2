@@ -1,10 +1,10 @@
-﻿namespace Soundfingerprinting.Audio.Services
+﻿using System;
+
+using Soundfingerprinting.Audio.Models;
+using Mirage; // the IWindowFunction method
+
+namespace Soundfingerprinting.Audio.Services
 {
-	using System;
-
-	using Soundfingerprinting.Audio.Models;
-	using Mirage; // the IWindowFunction method
-
 	public interface IAudioService : IDisposable
 	{
 		/// <summary>

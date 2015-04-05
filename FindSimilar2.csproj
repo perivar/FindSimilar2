@@ -135,7 +135,6 @@
     <Compile Include="Soundfingerprinting\HashBin.cs" />
     <Compile Include="Soundfingerprinting\HashBinMinHash.cs" />
     <Compile Include="Soundfingerprinting\IAudioService.cs" />
-    <Compile Include="Soundfingerprinting\IFFTService.cs" />
     <Compile Include="Soundfingerprinting\IFingerprintingConfiguration.cs" />
     <Compile Include="Soundfingerprinting\ImageService.cs" />
     <Compile Include="Soundfingerprinting\IncrementalRandomStride.cs" />
@@ -159,75 +158,12 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
-    <None Include="NativeLibraries\Bass\bass.chm" />
-    <None Include="NativeLibraries\Bass\bass.dll" />
-    <None Include="NativeLibraries\Bass\Bass.Net.dll" />
-    <None Include="NativeLibraries\Bass\Bass.Net.xml" />
-    <None Include="NativeLibraries\Bass\bass.txt" />
-    <None Include="NativeLibraries\Bass\bassasio.chm" />
-    <None Include="NativeLibraries\Bass\bassasio.dll" />
-    <None Include="NativeLibraries\Bass\bassasio.txt" />
-    <None Include="NativeLibraries\Bass\bassenc.chm" />
-    <None Include="NativeLibraries\Bass\bassenc.dll" />
-    <None Include="NativeLibraries\Bass\bassenc.txt" />
-    <None Include="NativeLibraries\Bass\bassflac.chm" />
-    <None Include="NativeLibraries\Bass\bassflac.dll" />
-    <None Include="NativeLibraries\Bass\bassflac.txt" />
-    <None Include="NativeLibraries\Bass\bassmix.chm" />
-    <None Include="NativeLibraries\Bass\bassmix.dll" />
-    <None Include="NativeLibraries\Bass\bassmix.txt" />
-    <None Include="NativeLibraries\Bass\basswma.chm" />
-    <None Include="NativeLibraries\Bass\basswma.dll" />
-    <None Include="NativeLibraries\Bass\basswma.txt" />
-    <None Include="NativeLibraries\Bass\basswv.chm" />
-    <None Include="NativeLibraries\Bass\basswv.dll" />
-    <None Include="NativeLibraries\Bass\basswv.txt" />
-    <None Include="NativeLibraries\Bass\bass_aac.dll" />
-    <None Include="NativeLibraries\Bass\bass_aac.txt" />
-    <None Include="NativeLibraries\Bass\bass_ac3.dll" />
-    <None Include="NativeLibraries\Bass\bass_ac3.txt" />
-    <None Include="NativeLibraries\Bass\bass_alac.dll" />
-    <None Include="NativeLibraries\Bass\bass_alac.txt" />
-    <None Include="NativeLibraries\Bass\bass_ape.dll" />
-    <None Include="NativeLibraries\Bass\bass_ape.txt" />
-    <None Include="NativeLibraries\Bass\bass_fx.chm" />
-    <None Include="NativeLibraries\Bass\bass_fx.dll" />
-    <None Include="NativeLibraries\Bass\bass_fx.txt" />
-    <None Include="NativeLibraries\Bass\bass_mpc.dll" />
-    <None Include="NativeLibraries\Bass\bass_mpc.txt" />
-    <None Include="NativeLibraries\Bass\bass_tta.dll" />
-    <None Include="NativeLibraries\Bass\bass_tta.txt" />
-    <None Include="NativeLibraries\Bass\tags-readme.txt" />
-    <None Include="NativeLibraries\Bass\tags.dll" />
     <None Include="NativeLibraries\faad\faad.exe" />
     <None Include="NativeLibraries\ffmpeg\ffmpeg.exe" />
     <None Include="NativeLibraries\ffmpeg\ffplay.exe" />
     <None Include="NativeLibraries\lame\lame.exe" />
     <None Include="NativeLibraries\lame\lame.txt" />
     <None Include="NativeLibraries\lame\lame_enc.dll" />
-    <None Include="NativeLibraries\libfftw\bench.exe" />
-    <None Include="NativeLibraries\libfftw\benchf.exe" />
-    <None Include="NativeLibraries\libfftw\benchl.exe" />
-    <None Include="NativeLibraries\libfftw\COPYING" />
-    <None Include="NativeLibraries\libfftw\COPYRIGHT" />
-    <None Include="NativeLibraries\libfftw\fftw-wisdom.exe" />
-    <None Include="NativeLibraries\libfftw\fftw3.f" />
-    <None Include="NativeLibraries\libfftw\fftw3.f03" />
-    <None Include="NativeLibraries\libfftw\fftw3.h" />
-    <None Include="NativeLibraries\libfftw\fftw3l.f03" />
-    <None Include="NativeLibraries\libfftw\fftw3q.f03" />
-    <None Include="NativeLibraries\libfftw\fftwf-wisdom.exe" />
-    <None Include="NativeLibraries\libfftw\fftwl-wisdom.exe" />
-    <None Include="NativeLibraries\libfftw\libfftw3-3.def" />
-    <None Include="NativeLibraries\libfftw\libfftw3-3.dll" />
-    <None Include="NativeLibraries\libfftw\libfftw3f-3.def" />
-    <None Include="NativeLibraries\libfftw\libfftw3f-3.dll" />
-    <None Include="NativeLibraries\libfftw\libfftw3l-3.def" />
-    <None Include="NativeLibraries\libfftw\libfftw3l-3.dll" />
-    <None Include="NativeLibraries\libfftw\NEWS" />
-    <None Include="NativeLibraries\libfftw\README" />
-    <None Include="NativeLibraries\libfftw\README-bench" />
-    <None Include="NativeLibraries\libfftw\README-WINDOWS" />
     <None Include="NativeLibraries\mplayer\License.txt" />
     <None Include="NativeLibraries\mplayer\mencoder.exe">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -243,11 +179,6 @@
     <None Include="NativeLibraries\mplayer\vorbis.acm">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="NativeLibraries\NAudio\license.txt" />
-    <None Include="NativeLibraries\NAudio\NAudio.dll" />
-    <None Include="NativeLibraries\NAudio\NAudio.WindowsMediaFormat.dll" />
-    <None Include="NativeLibraries\NAudio\NAudio.xml" />
-    <None Include="NativeLibraries\NAudio\readme.txt" />
     <None Include="NativeLibraries\oggenc2\oggenc2.exe" />
     <None Include="NativeLibraries\oggenc2\oggenc2.txt" />
     <None Include="NativeLibraries\sox\batch-example.bat" />
@@ -273,14 +204,6 @@
     <None Include="NativeLibraries\sox\zlib1.dll">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
-    <None Include="NativeLibraries\SQLite\README.txt" />
-    <None Include="NativeLibraries\SQLite\System.Data.SQLite.dll" />
-    <None Include="NativeLibraries\SQLite\System.Data.SQLite.EF6.dll" />
-    <None Include="NativeLibraries\SQLite\System.Data.SQLite.Linq.dll" />
-    <None Include="NativeLibraries\SQLite\x64\SQLite.Interop.dll" />
-    <None Include="NativeLibraries\SQLite\x86\SQLite.Interop.dll" />
-    <None Include="NativeLibraries\ZedGraph\ZedGraph.dll" />
-    <None Include="NativeLibraries\ZedGraph\ZedGraph.XML" />
     <None Include="README.md" />
     <None Include="Soundfingerprinting\perms.csv">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
@@ -292,20 +215,13 @@
     <Folder Include="Mirage" />
     <Folder Include="Audio" />
     <Folder Include="NativeLibraries" />
-    <Folder Include="NativeLibraries\Bass" />
     <Folder Include="NativeLibraries\faad" />
     <Folder Include="NativeLibraries\ffmpeg" />
     <Folder Include="NativeLibraries\lame" />
-    <Folder Include="NativeLibraries\libfftw" />
     <Folder Include="NativeLibraries\mplayer" />
     <Folder Include="NativeLibraries\mplayer\mplayer" />
-    <Folder Include="NativeLibraries\NAudio" />
     <Folder Include="NativeLibraries\oggenc2" />
     <Folder Include="NativeLibraries\sox" />
-    <Folder Include="NativeLibraries\SQLite" />
-    <Folder Include="NativeLibraries\SQLite\x64" />
-    <Folder Include="NativeLibraries\SQLite\x86" />
-    <Folder Include="NativeLibraries\ZedGraph" />
     <Folder Include="Soundfingerprinting" />
   </ItemGroup>
   <ItemGroup>

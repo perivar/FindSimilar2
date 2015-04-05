@@ -1,7 +1,7 @@
-﻿namespace Soundfingerprinting.Fingerprinting.Wavelets
-{
-	using System;
+﻿using System;
 
+namespace Soundfingerprinting.Fingerprinting.Wavelets
+{
 	public abstract class HaarWaveletDecomposition : IWaveletDecomposition
 	{
 		public abstract void DecomposeImageInPlace(double[][] image);

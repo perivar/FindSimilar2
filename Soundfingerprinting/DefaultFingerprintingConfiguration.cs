@@ -1,9 +1,9 @@
+using System;
+using Soundfingerprinting.Audio.Strides;
+using Mirage; // IWindowFunction
+
 namespace Soundfingerprinting.Fingerprinting.Configuration
 {
-	using System;
-	using Soundfingerprinting.Audio.Strides;
-	using Mirage;
-
 	public class DefaultFingerprintingConfiguration : IFingerprintingConfiguration
 	{
 		public DefaultFingerprintingConfiguration()
