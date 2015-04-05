@@ -1,1 +1,0 @@
-sqlite-netFx451-binary-bundle-Win32-2013-1.0.96.0

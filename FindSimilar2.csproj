@@ -20,11 +20,12 @@
     <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Platform)' == 'AnyCPU' ">
-    <PlatformTarget>x86</PlatformTarget>
+    <PlatformTarget>AnyCPU</PlatformTarget>
     <BaseAddress>4194304</BaseAddress>
     <RegisterForComInterop>False</RegisterForComInterop>
     <GenerateSerializationAssemblies>Auto</GenerateSerializationAssemblies>
     <FileAlignment>4096</FileAlignment>
+    <Prefer32Bit>True</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <OutputPath>bin\Debug\</OutputPath>
@@ -326,8 +327,7 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
-    <PreBuildEvent>xcopy /ey "$(ProjectDir)NativeLibraries\Bass\*.dll" "$(TargetDir)"
-xcopy /ey "$(ProjectDir)NativeLibraries\libfftw\*.dll" "$(TargetDir)" 
-xcopy /ey "$(ProjectDir)NativeLibraries\SQLite\*.dll" "$(TargetDir)"</PreBuildEvent>
+    <PreBuildEvent>xcopy /ey "$(ProjectDir)NativeLibraries\Bass.x86\*.dll" "$(TargetDir)"
+xcopy /ey "$(ProjectDir)NativeLibraries\SQLite.x86\*.dll" "$(TargetDir)"</PreBuildEvent>
   </PropertyGroup>
 </Project>

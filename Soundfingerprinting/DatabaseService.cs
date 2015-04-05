@@ -14,17 +14,18 @@ namespace Soundfingerprinting.DbStorage
 	// heavily modified by perivar@nerseth.com
 	public class DatabaseService
 	{
-		// performance:
+		// how to increase sqlite performance
 		// http://stackoverflow.com/questions/4356363/sqlite-net-performance-how-to-speed-up-things
 		
+		// private variables
 		private string dbFilePath;
-
-		IDbConnection dbcon;
-
-		// singleton instance
-		private static DatabaseService instance;
+		private string sqliteConnectionString;
+		private IDbConnection dbcon;
 		
 		#region Singleton Patterns
+		// singleton instance
+		private static DatabaseService instance;
+
 		/// <summary>
 		/// Return a DatabaseService Instance
 		/// </summary>
@@ -44,6 +45,8 @@ namespace Soundfingerprinting.DbStorage
 		{
 			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
 			string dbdir = Path.Combine(homedir,".findsimilar");
+			
+			// set the db file path
 			dbFilePath = Path.Combine(dbdir, "findsimilar.db");
 			
 			bool doResetDatabase = false;
@@ -52,8 +55,11 @@ namespace Soundfingerprinting.DbStorage
 				doResetDatabase = true;
 			}
 			
+			// store the connection string
+			sqliteConnectionString = GetSQLiteConnectionString(dbFilePath);
+			
 			// open up the connection
-			dbcon = GetConnection(dbFilePath);
+			dbcon = GetNewSQLiteConnection();
 			dbcon.Open();
 
 			if (doResetDatabase) {
@@ -63,14 +69,17 @@ namespace Soundfingerprinting.DbStorage
 		
 		~DatabaseService()
 		{
-			// removed this because is caused a already disposed exception
+			// removed this because is caused a ObjectDisposedException:
+			// Unhandled Exception: System.ObjectDisposedException: Cannot access a disposed object.
+			// Object name: 'SQLiteConnection'.
+			// at System.Data.SQLite.SQLiteConnection.CheckDisposed()
 			//dbcon.Close();
 		}
 
 		#endregion
 		
-		#region Public static methods
-		public static IDbConnection GetConnection(string dbFilePath) {
+		#region SQLiteConnection Methods
+		private static string GetSQLiteConnectionString(string dbFilePath) {
 			
 			var connBuilder = new SQLiteConnectionStringBuilder();
 			connBuilder.DataSource = dbFilePath;
@@ -78,8 +87,9 @@ namespace Soundfingerprinting.DbStorage
 			connBuilder.PageSize = 4096; 	// set page size to NTFS cluster size = 4096 bytes
 			connBuilder.CacheSize = 10000; 	// cache size in bytes
 			
-			// Do not use the inbuilt connection pooling of System.Data.SQLite
-			// We use our own connection pool which is faster.
+			// Whether to use the inbuilt connection pooling of System.Data.SQLite
+			// It is possible to use a separate connection pool which could be faster like:
+			// https://github.com/MediaPortal/MediaPortal-2/blob/master/MediaPortal/Incubator/SQLiteDatabase/ConnectionPool.cs
 			connBuilder.Pooling = true;
 			
 			// false = Use the newer 3.3x database format which compresses numbers more effectively
@@ -122,16 +132,29 @@ namespace Soundfingerprinting.DbStorage
 			//PRAGMA main.synchronous=NORMAL;
 			//PRAGMA main.journal_mode=WAL;
 			
+			// And according to MusicBrowser.Engines.Cache SQLiteHelper.cs this is best
+			// PRAGMA main.page_size = 4096;
+			// PRAGMA main.cache_size=-32;
+			// PRAGMA main.temp_store = MEMORY;
+			// PRAGMA main.synchronous=OFF;
+			// PRAGMA main.journal_mode=MEMORY;
+			
 			// also check this
 			// http://stackoverflow.com/questions/15383615/multiple-access-to-a-single-sqlite-database-file-via-system-data-sqlite-and-c-sh
 			
-			// and this
-			// https://github.com/MediaPortal/MediaPortal-2/blob/master/MediaPortal/Incubator/SQLiteDatabase/ConnectionPool.cs
-			
-			
-			return (IDbConnection) new SQLiteConnection(connBuilder.ToString());
+			return connBuilder.ToString();
 		}
+
+		public IDbConnection GetNewSQLiteConnection() {
+			if (!string.IsNullOrEmpty(sqliteConnectionString)) {
+				return (IDbConnection) new SQLiteConnection(sqliteConnectionString);
+			} else {
+				return null;
+			}
+		}
+		#endregion
 		
+		#region Static Database Methods
 		public static void CreateDB(string dbFilePath)
 		{
 			if (!Directory.Exists(Path.GetDirectoryName(dbFilePath))) {
@@ -157,11 +180,13 @@ namespace Soundfingerprinting.DbStorage
 		}
 		#endregion
 		
-		#region Reset Database methods
+		#region Reset Database Methods
 		public void ResetDatabase() {
 			// ensure the sqlite doesn't keep a lock to the database as we are trying to delete it
 			dbcon.Close();
-			dbcon.Dispose();
+			
+			// if using sql lite connection pooling
+			//dbcon.Dispose();
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
 			
@@ -170,7 +195,7 @@ namespace Soundfingerprinting.DbStorage
 			CreateDB(dbFilePath);
 
 			// reset the connection
-			dbcon = GetConnection(dbFilePath);
+			dbcon = GetNewSQLiteConnection();
 			dbcon.Open();
 			
 			AddDatabaseTables();
@@ -329,88 +354,57 @@ namespace Soundfingerprinting.DbStorage
 
 		public bool InsertFingerprint(IEnumerable<Fingerprint> collection)
 		{
-			IDbDataParameter dbTrackIdParam = new SQLiteParameter("@trackid", DbType.Int32);
-			IDbDataParameter dbSongOrderParam = new SQLiteParameter("@songorder", DbType.Int32);
-			IDbDataParameter dbTotalFingerprintsParam = new SQLiteParameter("@totalfingerprints", DbType.Int32);
-			IDbDataParameter dbSignatureParam = new SQLiteParameter("@signature", DbType.Binary);
-			
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-				dbcmd.CommandText = "INSERT INTO fingerprints (trackid, songorder, totalfingerprints, signature) " +
-					"VALUES (@trackid, @songorder, @totalfingerprints, @signature); SELECT last_insert_rowid();";
-
-				dbcmd.Parameters.Add(dbTrackIdParam);
-				dbcmd.Parameters.Add(dbSongOrderParam);
-				dbcmd.Parameters.Add(dbTotalFingerprintsParam);
-				dbcmd.Parameters.Add(dbSignatureParam);
-				dbcmd.Prepare();
-				
-				int count = collection.Count();
-				using (var transaction = dbcon.BeginTransaction())
+			int count = collection.Count();
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
+			{
+				connection.Open();
+				using (var command = new SQLiteCommand(connection))
 				{
-					try {
+					using (var transaction = connection.BeginTransaction())
+					{
 						foreach (var fingerprint in collection) {
-							dbTrackIdParam.Value = fingerprint.TrackId;
-							dbSongOrderParam.Value = fingerprint.SongOrder;
-							dbTotalFingerprintsParam.Value = fingerprint.TotalFingerprintsPerTrack = count;
-							dbSignatureParam.Value = BoolToByte(fingerprint.Signature);
+							command.CommandText = "INSERT INTO fingerprints (trackid, songorder, totalfingerprints, signature) " +
+								"VALUES (@trackid, @songorder, @totalfingerprints, @signature); SELECT last_insert_rowid();";
+							
+							command.Parameters.AddWithValue("@trackid", fingerprint.TrackId);
+							command.Parameters.AddWithValue("@songorder", fingerprint.SongOrder);
+							command.Parameters.AddWithValue("@totalfingerprints", count);
+							command.Parameters.AddWithValue("@signature", BoolToByte(fingerprint.Signature));
 
-							fingerprint.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
+							fingerprint.Id = Convert.ToInt32(command.ExecuteScalar());
 						}
 						transaction.Commit();
-						dbcmd.Dispose();
-						
-					} catch (Exception e1) {
-						// attempt to rollback the transaction
-						try {
-							transaction.Rollback();
-						} catch (Exception) {
-							// do nothing
-						}
-						throw e1;
 					}
 				}
+				connection.Close();
 			}
 			return true;
 		}
 
 		public bool InsertTrack(Track track)
 		{
-			IDbDataParameter dbAlbumIdParam = new SQLiteParameter("@albumid", DbType.Int64);
-			IDbDataParameter dbLengthParam = new SQLiteParameter("@length", DbType.Int32);
-			IDbDataParameter dbArtistParam = new SQLiteParameter("@artist", DbType.String);
-			IDbDataParameter dbTitleParam = new SQLiteParameter("@title", DbType.String);
-			IDbDataParameter dbFilePathParam = new SQLiteParameter("@filepath", DbType.String);
-			IDbDataParameter dbTagsParam = new SQLiteParameter("@tags", DbType.String);
-			
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-			}
-			dbcmd.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath, tags) " +
-				"VALUES (@albumid, @length, @artist, @title, @filepath, @tags); SELECT last_insert_rowid();";
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
+			{
+				connection.Open();
+				using (var command = new SQLiteCommand(connection))
+				{
+					using (var transaction = connection.BeginTransaction())
+					{
+						command.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath, tags) " +
+							"VALUES (@albumid, @length, @artist, @title, @filepath, @tags); SELECT last_insert_rowid();";
 
-			dbcmd.Parameters.Add(dbAlbumIdParam);
-			dbcmd.Parameters.Add(dbLengthParam);
-			dbcmd.Parameters.Add(dbArtistParam);
-			dbcmd.Parameters.Add(dbTitleParam);
-			dbcmd.Parameters.Add(dbFilePathParam);
-			dbcmd.Parameters.Add(dbTagsParam);
-
-			dbAlbumIdParam.Value = track.AlbumId;
-			dbLengthParam.Value = track.TrackLengthMs;
-			dbArtistParam.Value = track.Artist;
-			dbTitleParam.Value = track.Title;
-			dbFilePathParam.Value = track.FilePath;
-			dbTagsParam.Value = string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value));
-			
-			try {
-				dbcmd.Prepare();
-				track.Id = Convert.ToInt32(dbcmd.ExecuteScalar());
-				dbcmd.Dispose();
-			} catch (Exception e) {
-				throw e;
+						command.Parameters.AddWithValue("@albumid", track.AlbumId);
+						command.Parameters.AddWithValue("@length", track.TrackLengthMs);
+						command.Parameters.AddWithValue("@artist", track.Artist);
+						command.Parameters.AddWithValue("@title", track.Title);
+						command.Parameters.AddWithValue("@filepath", track.FilePath);
+						command.Parameters.AddWithValue("@tags", string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value)));
+						
+						track.Id = Convert.ToInt32(command.ExecuteScalar());
+						transaction.Commit();
+					}
+				}
+				connection.Close();
 			}
 			return true;
 		}
@@ -502,47 +496,28 @@ namespace Soundfingerprinting.DbStorage
 
 		public bool InsertHashBin(IEnumerable<HashBinMinHash> collection)
 		{
-			IDbDataParameter dbHashBinParam = new SQLiteParameter("@hashbin", DbType.Int64);
-			IDbDataParameter dbHashTableParam = new SQLiteParameter("@hashtable", DbType.Int32);
-			IDbDataParameter dbTrackIdParam = new SQLiteParameter("@trackid", DbType.Int32);
-			IDbDataParameter dbFingerprintIdParam = new SQLiteParameter("@fingerprintid", DbType.Int32);
-			
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-				dbcmd.CommandText = "INSERT INTO hashbins (hashbin, hashtable, trackid, fingerprintid) " +
-					"VALUES (@hashbin, @hashtable, @trackid, @fingerprintid)";
-
-				dbcmd.Parameters.Add(dbHashBinParam);
-				dbcmd.Parameters.Add(dbHashTableParam);
-				dbcmd.Parameters.Add(dbTrackIdParam);
-				dbcmd.Parameters.Add(dbFingerprintIdParam);
-				dbcmd.Prepare();
-				
-				using (var transaction = dbcon.BeginTransaction())
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
+			{
+				connection.Open();
+				using (var command = new SQLiteCommand(connection))
 				{
-					try {
+					using (var transaction = connection.BeginTransaction())
+					{
 						foreach (var hashBin in collection) {
-							dbHashBinParam.Value = hashBin.Bin;
-							dbHashTableParam.Value = hashBin.HashTable;
-							dbTrackIdParam.Value = hashBin.TrackId;
-							dbFingerprintIdParam.Value = hashBin.FingerprintId;
+							command.CommandText = "INSERT INTO hashbins (hashbin, hashtable, trackid, fingerprintid) " +
+								"VALUES (@hashbin, @hashtable, @trackid, @fingerprintid)";
 							
-							dbcmd.ExecuteNonQuery();
+							command.Parameters.AddWithValue("@hashbin", hashBin.Bin);
+							command.Parameters.AddWithValue("@hashtable", hashBin.HashTable);
+							command.Parameters.AddWithValue("@trackid", hashBin.TrackId);
+							command.Parameters.AddWithValue("@fingerprintid", hashBin.FingerprintId);
+							
+							command.ExecuteNonQuery(); // do not try to store the row ids
 						}
 						transaction.Commit();
-						dbcmd.Dispose();
-						
-					} catch (Exception e1) {
-						// attempt to rollback the transaction
-						try {
-							transaction.Rollback();
-						} catch (Exception) {
-							// do nothing
-						}
-						throw e1;
 					}
 				}
+				connection.Close();
 			}
 			return true;
 		}
@@ -561,12 +536,12 @@ namespace Soundfingerprinting.DbStorage
 			dbcmd.Dispose();
 			return count;
 		}
-		
+
 		public IDictionary<Track, int> ReadDuplicatedTracks()
 		{
 			throw new NotImplementedException();
 		}
-		
+
 		public IList<Fingerprint> ReadFingerprints()
 		{
 			var fingerprints = new List<Fingerprint>();
@@ -701,7 +676,7 @@ namespace Soundfingerprinting.DbStorage
 			dbcmd.Dispose();
 			return fingerprint;
 		}
-		
+
 		public IList<Fingerprint> ReadFingerprintById(IEnumerable<int> ids)
 		{
 			var fingerprints = new List<Fingerprint>();
@@ -736,12 +711,7 @@ namespace Soundfingerprinting.DbStorage
 
 		public IList<string> ReadTrackFilenames() {
 			var filenames = new List<string>();
-			
-			IDbCommand dbcmd;
-			lock (dbcon) {
-				dbcmd = dbcon.CreateCommand();
-			}
-			
+			IDbCommand dbcmd = dbcon.CreateCommand();
 			dbcmd.CommandText = "SELECT filepath FROM [tracks]";
 			dbcmd.CommandType = CommandType.Text;
 
@@ -755,7 +725,7 @@ namespace Soundfingerprinting.DbStorage
 			dbcmd.Dispose();
 			return filenames;
 		}
-		
+
 		public IList<Track> ReadTracks()
 		{
 			var tracks = new List<Track>();
@@ -822,7 +792,7 @@ namespace Soundfingerprinting.DbStorage
 			dbcmd.Dispose();
 			return tracks;
 		}
-		
+
 		public Track ReadTrackById(int id)
 		{
 			IDbCommand dbcmd;
@@ -889,7 +859,7 @@ namespace Soundfingerprinting.DbStorage
 			dbcmd.Dispose();
 			return tracks;
 		}
-		
+
 		public Track ReadTrackByArtistAndTitleName(string artist, string title)
 		{
 			throw new NotImplementedException();
@@ -952,7 +922,7 @@ namespace Soundfingerprinting.DbStorage
 
 			return result;
 		}
-		
+
 		/// <summary>
 		/// Find fingerprints using hash-buckets (e.g. HashBins)
 		/// </summary>
@@ -1060,7 +1030,7 @@ namespace Soundfingerprinting.DbStorage
 			throw new NotImplementedException();
 		}
 		#endregion
-		
+
 		#region Private Static Utils
 		private static bool[] ByteToBool(byte[] byteArray) {
 			// basic - same count
@@ -1070,7 +1040,7 @@ namespace Soundfingerprinting.DbStorage
 			}
 			return boolArray;
 		}
-		
+
 		private static byte[] BoolToByte(bool[] boolArray) {
 			// http://stackoverflow.com/questions/713057/convert-bool-to-byte-c-sharp
 			// basic - same count
