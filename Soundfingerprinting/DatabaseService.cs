@@ -259,15 +259,16 @@ namespace Soundfingerprinting.DbStorage
 							command.CommandText = "INSERT INTO fingerprints (trackid, songorder, totalfingerprints, signature) " +
 								"VALUES (@trackid, @songorder, @totalfingerprints, @signature); SELECT last_insert_rowid();";
 							
+							int totalfingerprintsCount = collection.Count();
 							command.Parameters.Add("@trackid", DbType.Int32);
 							command.Parameters.Add("@songorder", DbType.Int32);
-							command.Parameters.Add("@totalfingerprints", DbType.Int32).Value = collection.Count();
+							command.Parameters.Add("@totalfingerprints", DbType.Int32);
 							command.Parameters.Add("@signature", DbType.Binary);
 							
 							foreach (var fingerprint in collection) {
 								command.Parameters["@trackid"].Value = fingerprint.TrackId;
 								command.Parameters["@songorder"].Value = fingerprint.SongOrder;
-								// command.Parameters["@totalfingerprints"] is already correct
+								command.Parameters["@totalfingerprints"].Value = fingerprint.TotalFingerprintsPerTrack = totalfingerprintsCount;
 								command.Parameters["@signature"].Value = BoolToByte(fingerprint.Signature);
 
 								fingerprint.Id = Convert.ToInt32(command.ExecuteScalar());
