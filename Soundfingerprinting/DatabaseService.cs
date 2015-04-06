@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using System.Collections.Generic;
@@ -15,6 +16,7 @@ namespace Soundfingerprinting.DbStorage
 	{
 		// how to increase sqlite performance
 		// http://stackoverflow.com/questions/4356363/sqlite-net-performance-how-to-speed-up-things
+		// http://www.codeproject.com/Articles/853842/Csharp-Avoiding-Performance-Issues-with-Inserts-in
 		
 		// private variables
 		private string dbFilePath;
@@ -245,85 +247,109 @@ namespace Soundfingerprinting.DbStorage
 		#region Inserts
 		public bool InsertFingerprint(IEnumerable<Fingerprint> collection)
 		{
-			int count = collection.Count();
-			using (var connection = new SQLiteConnection(sqliteConnectionString))
-			{
-				using (var command = connection.CreateCommand())
+			try {
+				using (var connection = new SQLiteConnection(sqliteConnectionString))
 				{
 					connection.Open(); // must open connection in order to begin a transaction
 					using (var transaction = connection.BeginTransaction())
 					{
-						foreach (var fingerprint in collection) {
+						using (var command = connection.CreateCommand())
+						{
+							command.Transaction = transaction;
 							command.CommandText = "INSERT INTO fingerprints (trackid, songorder, totalfingerprints, signature) " +
 								"VALUES (@trackid, @songorder, @totalfingerprints, @signature); SELECT last_insert_rowid();";
 							
-							command.Parameters.AddWithValue("@trackid", fingerprint.TrackId);
-							command.Parameters.AddWithValue("@songorder", fingerprint.SongOrder);
-							command.Parameters.AddWithValue("@totalfingerprints", count);
-							command.Parameters.AddWithValue("@signature", BoolToByte(fingerprint.Signature));
+							command.Parameters.Add("@trackid", DbType.Int32);
+							command.Parameters.Add("@songorder", DbType.Int32);
+							command.Parameters.Add("@totalfingerprints", DbType.Int32).Value = collection.Count();
+							command.Parameters.Add("@signature", DbType.Binary);
+							
+							foreach (var fingerprint in collection) {
+								command.Parameters["@trackid"].Value = fingerprint.TrackId;
+								command.Parameters["@songorder"].Value = fingerprint.SongOrder;
+								// command.Parameters["@totalfingerprints"] is already correct
+								command.Parameters["@signature"].Value = BoolToByte(fingerprint.Signature);
 
-							fingerprint.Id = Convert.ToInt32(command.ExecuteScalar());
+								fingerprint.Id = Convert.ToInt32(command.ExecuteScalar());
+							}
+							transaction.Commit();
 						}
-						transaction.Commit();
 					}
 				}
+				return true;
+			} catch (Exception) {
+				return false;
 			}
-			return true;
 		}
 
 		public bool InsertTrack(Track track)
 		{
-			using (var connection = new SQLiteConnection(sqliteConnectionString))
-			{
-				using (var command = connection.CreateCommand())
+			try {
+				using (var connection = new SQLiteConnection(sqliteConnectionString))
 				{
 					connection.Open(); // must open connection in order to begin a transaction
 					using (var transaction = connection.BeginTransaction())
 					{
-						command.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath, tags) " +
-							"VALUES (@albumid, @length, @artist, @title, @filepath, @tags); SELECT last_insert_rowid();";
-
-						command.Parameters.AddWithValue("@albumid", track.AlbumId);
-						command.Parameters.AddWithValue("@length", track.TrackLengthMs);
-						command.Parameters.AddWithValue("@artist", track.Artist);
-						command.Parameters.AddWithValue("@title", track.Title);
-						command.Parameters.AddWithValue("@filepath", track.FilePath);
-						command.Parameters.AddWithValue("@tags", string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value)));
-						
-						track.Id = Convert.ToInt32(command.ExecuteScalar());
-						transaction.Commit();
+						using (var command = connection.CreateCommand())
+						{
+							command.Transaction = transaction;
+							command.CommandText = "INSERT INTO tracks (albumid, length, artist, title, filepath, tags) " +
+								"VALUES (@albumid, @length, @artist, @title, @filepath, @tags); SELECT last_insert_rowid();";
+							
+							// could possibly also use command.Parameters.AddWithValue
+							command.Parameters.Add("@albumid", DbType.Int64).Value = track.AlbumId;
+							command.Parameters.Add("@length", DbType.Int32).Value = track.TrackLengthMs;
+							command.Parameters.Add("@artist", DbType.String).Value = track.Artist;
+							command.Parameters.Add("@title", DbType.String).Value = track.Title;
+							command.Parameters.Add("@filepath", DbType.String).Value = track.FilePath;
+							command.Parameters.Add("@tags", DbType.String).Value = string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value));
+							
+							track.Id = Convert.ToInt32(command.ExecuteScalar());
+							transaction.Commit();
+						}
 					}
 				}
+				return true;
+			} catch (Exception) {
+				return false;
 			}
-			return true;
 		}
 		
 		public bool InsertHashBin(IEnumerable<HashBinMinHash> collection)
 		{
-			using (var connection = new SQLiteConnection(sqliteConnectionString))
-			{
-				using (var command = connection.CreateCommand())
+			try {
+				using (var connection = new SQLiteConnection(sqliteConnectionString))
 				{
 					connection.Open(); // must open connection in order to begin a transaction
 					using (var transaction = connection.BeginTransaction())
 					{
-						foreach (var hashBin in collection) {
+						using (var command = connection.CreateCommand())
+						{
+							command.Transaction = transaction;
 							command.CommandText = "INSERT INTO hashbins (hashbin, hashtable, trackid, fingerprintid) " +
 								"VALUES (@hashbin, @hashtable, @trackid, @fingerprintid)";
 							
-							command.Parameters.AddWithValue("@hashbin", hashBin.Bin);
-							command.Parameters.AddWithValue("@hashtable", hashBin.HashTable);
-							command.Parameters.AddWithValue("@trackid", hashBin.TrackId);
-							command.Parameters.AddWithValue("@fingerprintid", hashBin.FingerprintId);
+							command.Parameters.Add("@hashbin", DbType.Int64);
+							command.Parameters.Add("@hashtable", DbType.Int32);
+							command.Parameters.Add("@trackid", DbType.Int32);
+							command.Parameters.Add("@fingerprintid", DbType.Int32);
 							
-							command.ExecuteNonQuery(); // do not try to store the row ids
+							foreach (var hashBin in collection) {
+								command.Parameters["@hashbin"].Value = hashBin.Bin;
+								command.Parameters["@hashtable"].Value = hashBin.HashTable;
+								command.Parameters["@trackid"].Value = hashBin.TrackId;
+								command.Parameters["@fingerprintid"].Value = hashBin.FingerprintId;
+								
+								int rowsAffected = command.ExecuteNonQuery();
+							}
+							transaction.Commit();
 						}
-						transaction.Commit();
 					}
 				}
-				connection.Close();
+				return true;
+			} catch (Exception) {
+				return false;
 			}
-			return true;
 		}
 		#endregion
 

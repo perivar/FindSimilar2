@@ -181,11 +181,11 @@ namespace FindSimilar2
 			if (hti.ColumnIndex >= 0 && hti.RowIndex >= 0) {
 				DataGridViewCell dragCell = dataGridView1[hti.ColumnIndex, hti.RowIndex];
 				
-				// set current cell
+				// set current cell (this will trigger the DataGridView1SelectionChanged Event)
 				dataGridView1.CurrentCell = null;
 				dataGridView1.CurrentCell = dragCell;
 
-				// check value
+				// check if using left mouse button
 				if (e.Button == MouseButtons.Left) {
 					
 					if (dragCell.Value != null) {
@@ -363,8 +363,13 @@ namespace FindSimilar2
 			
 			// Start "please wait" screen
 			splashScreen = new SplashSceenWaitingForm();
+			
+			#if DEBUG
+			findSimilarSearch_DoWork(splashScreen, new DoWorkEventArgs(bgWorkerArg));
+			#else
 			splashScreen.DoWork += new SplashSceenWaitingForm.DoWorkEventHandler(findSimilarSearch_DoWork);
 			splashScreen.Argument = bgWorkerArg;
+			#endif
 			
 			// check return value
 			DialogResult result = splashScreen.ShowDialog();
