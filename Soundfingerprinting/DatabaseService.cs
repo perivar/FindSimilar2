@@ -184,11 +184,11 @@ namespace Soundfingerprinting.DbStorage
 		public void AddDatabaseTables() {
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
-				using (var command = connection.CreateCommand())
+				connection.Open(); // must open connection in order to begin a transaction
+				using (var transaction = connection.BeginTransaction())
 				{
-					connection.Open(); // must open connection in order to begin a transaction
-					
-					using (var transaction = connection.BeginTransaction()) {
+					using (var command = connection.CreateCommand())
+					{
 						AddFingerprintTable(command);
 						AddHashBinTable(command);
 						AddTrackTable(command);
@@ -273,8 +273,11 @@ namespace Soundfingerprinting.DbStorage
 
 								fingerprint.Id = Convert.ToInt32(command.ExecuteScalar());
 							}
-							transaction.Commit();
 						}
+						
+						// We commit the whole transaction to the database. In case of an exception, the transaction is rolled back behind the scenes.
+						// In case of an exception, the transaction is rolled back behind the scenes.
+						transaction.Commit();
 					}
 				}
 				return true;
@@ -306,8 +309,11 @@ namespace Soundfingerprinting.DbStorage
 							command.Parameters.Add("@tags", DbType.String).Value = string.Join(";", track.Tags.Select(x => x.Key + "=" + x.Value));
 							
 							track.Id = Convert.ToInt32(command.ExecuteScalar());
-							transaction.Commit();
 						}
+
+						// We commit the whole transaction to the database. In case of an exception, the transaction is rolled back behind the scenes.
+						// In case of an exception, the transaction is rolled back behind the scenes.
+						transaction.Commit();
 					}
 				}
 				return true;
@@ -343,8 +349,11 @@ namespace Soundfingerprinting.DbStorage
 								
 								int rowsAffected = command.ExecuteNonQuery();
 							}
-							transaction.Commit();
 						}
+						
+						// We commit the whole transaction to the database. In case of an exception, the transaction is rolled back behind the scenes.
+						// In case of an exception, the transaction is rolled back behind the scenes.
+						transaction.Commit();
 					}
 				}
 				return true;
@@ -375,10 +384,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = "SELECT id, trackid, songorder, signature FROM [fingerprints]";
 					
 					using (var reader = command.ExecuteReader())
@@ -404,10 +412,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = "SELECT id, songorder, signature FROM [fingerprints] WHERE [trackid] = @trackid LIMIT @limit";
 					command.Parameters.AddWithValue("@trackid", trackId);
 					command.Parameters.AddWithValue("@limit", numberOfFingerprintsToRead);
@@ -442,10 +449,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = query;
 					
 					using (var reader = command.ExecuteReader())
@@ -486,10 +492,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = "SELECT trackid, songorder, totalfingerprints, signature FROM [fingerprints] WHERE [id] = @id";
 					command.Parameters.AddWithValue("@id", id);
 					
@@ -519,10 +524,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = query;
 					
 					using (var reader = command.ExecuteReader())
@@ -549,10 +553,9 @@ namespace Soundfingerprinting.DbStorage
 
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = "SELECT filepath FROM [tracks]";
 					
 					using (var reader = command.ExecuteReader())
@@ -574,10 +577,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = "SELECT id, albumid, length, artist, title, filepath FROM [tracks]";
 					
 					using (var reader = command.ExecuteReader())
@@ -612,10 +614,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = query;
 					
 					using (var reader = command.ExecuteReader())
@@ -645,10 +646,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = "SELECT albumid, length, artist, title, filepath FROM [tracks] WHERE [id] = @id";
 					command.Parameters.AddWithValue("@id", id);
 					
@@ -681,10 +681,9 @@ namespace Soundfingerprinting.DbStorage
 			
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = query;
 					
 					using (var reader = command.ExecuteReader())
@@ -713,54 +712,6 @@ namespace Soundfingerprinting.DbStorage
 		/// </summary>
 		/// <param name="hashBuckets"></param>
 		/// <returns>Return dictionary with fingerprintids as keys and the corresponding hashbins as values</returns>
-		public IDictionary<int, IList<HashBinMinHash>> ReadFingerprintsByHashBucketLshSlow(long[] hashBuckets)
-		{
-			IDictionary<int, IList<HashBinMinHash>> result = new Dictionary<int, IList<HashBinMinHash>>();
-			
-			using (var connection = new SQLiteConnection(sqliteConnectionString))
-			{
-				using (var command = connection.CreateCommand())
-				{
-					connection.Open();
-					
-					command.CommandText = "SELECT id, hashbin, hashtable, trackid, fingerprintid FROM hashbins WHERE hashbin = @hashbin";
-
-					foreach (long hashBin in hashBuckets)
-					{
-						command.Parameters.AddWithValue("@hashbin", hashBin);
-
-						using (var reader = command.ExecuteReader())
-						{
-							var resultPerHashBucket = new Dictionary<int, HashBinMinHash>();
-							while (reader.Read()) {
-								int hashId = reader.GetInt32(0);
-								long hashBin2 = reader.GetInt32(1);
-								int hashTable = reader.GetInt32(2);
-								int trackId = reader.GetInt32(3);
-								int fingerprintId = reader.GetInt32(4);
-								var hash = new HashBinMinHash(hashId, hashBin2, hashTable, trackId, fingerprintId);
-								resultPerHashBucket.Add(fingerprintId, hash);
-							}
-							
-							foreach (var pair in resultPerHashBucket) {
-								if (result.ContainsKey(pair.Key)) {
-									result[pair.Key].Add(pair.Value);
-								} else
-									result.Add(pair.Key, new List<HashBinMinHash>(new[] { pair.Value }));
-							}
-						}
-					}
-				}
-			}
-
-			return result;
-		}
-
-		/// <summary>
-		/// Find fingerprints using hash-buckets (e.g. HashBins)
-		/// </summary>
-		/// <param name="hashBuckets"></param>
-		/// <returns>Return dictionary with fingerprintids as keys and the corresponding hashbins as values</returns>
 		public IDictionary<int, IList<HashBinMinHash>> ReadFingerprintsByHashBucketLsh(long[] hashBuckets) {
 			
 			IDictionary<int, IList<HashBinMinHash>> result = new Dictionary<int, IList<HashBinMinHash>>();
@@ -769,10 +720,9 @@ namespace Soundfingerprinting.DbStorage
 
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = String.Format("SELECT id, hashbin, hashtable, trackid, fingerprintid FROM hashbins WHERE (hashbin IN ({0}))", statementValueTags);
 					
 					using (var reader = command.ExecuteReader())
@@ -813,10 +763,9 @@ namespace Soundfingerprinting.DbStorage
 
 			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
+				connection.Open();
 				using (var command = connection.CreateCommand())
 				{
-					connection.Open();
-					
 					command.CommandText = query;
 					
 					using (var reader = command.ExecuteReader())
