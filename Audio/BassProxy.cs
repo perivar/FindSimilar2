@@ -431,6 +431,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name = "stream">stream</param>
 		/// <param name = "samplerate">Sample rate at which to perform reading</param>
 		/// <returns>Array with mono data</returns>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadMonoFromFile(Stream stream, int samplerate) {
 			var length = stream.Length;
 			var source = new byte[length];
@@ -447,8 +448,7 @@ namespace FindSimilar2.AudioProxies
 			}
 			catch(Exception e)
 			{
-				//e.Message;
-				return null;
+				throw new Exception(e.Message);
 			}
 			finally
 			{
@@ -462,6 +462,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name = "filename">Filename to be read</param>
 		/// <param name = "samplerate">Sample rate at which to perform reading</param>
 		/// <returns>Array with mono data</returns>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadMonoFromFile(string filename, int samplerate)
 		{
 			return ReadMonoFromFile(filename, samplerate, 0, 0);
@@ -479,6 +480,7 @@ namespace FindSimilar2.AudioProxies
 		/// Seeking capabilities of Bass where not used because of the possible
 		/// timing errors on different formats.
 		/// </remarks>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadMonoFromFile(string filename, int samplerate, int milliseconds, int startmillisecond)
 		{
 			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
@@ -513,6 +515,7 @@ namespace FindSimilar2.AudioProxies
 		/// Seeking capabilities of Bass where not used because of the possible
 		/// timing errors on different formats.
 		/// </remarks>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadMonoFromStream(IntPtr streamPtr, int length, int samplerate, int milliseconds, int startmillisecond)
 		{
 			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
@@ -542,6 +545,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="milliseconds">Milliseconds to read</param>
 		/// <param name="startmillisecond">Start millisecond</param>
 		/// <returns>Array of samples</returns>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		private static float[] ReadMonoFromFile(int stream, int samplerate, int milliseconds, int startmillisecond)
 		{
 			float[] data = null;
@@ -655,6 +659,7 @@ namespace FindSimilar2.AudioProxies
 		/// will be the first left level, index 1 will be the first right level, index
 		/// 2 will be the second left level, etc.
 		/// </remarks>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadFromFile(string fileName, out int sampleRate, out int bitsPerSample, out int channels, out long byteLength, out int channelSampleLength) {
 			
 			// BASS_STREAM_DECODE	Decode the sample data, without outputting it.
@@ -705,6 +710,7 @@ namespace FindSimilar2.AudioProxies
 		/// </summary>
 		/// <param name="fileName">Fully referenced path and file name of the Wave file to create.</param>
 		/// <returns>Array with multi channel data</returns>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[] ReadFromFile(string fileName) {
 			
 			int sampleRate = -1;
@@ -729,6 +735,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="startfreq"></param>
 		/// <param name="endfreq"></param>
 		/// <returns>spectrum data</returns>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static float[][] ReadSpectrum(string filename, int samplerate, int startmillisecond, int milliseconds, int overlap, int wdftsize, int logbins, int startfreq, int endfreq)
 		{
 			int totalmilliseconds = 0;
@@ -862,6 +869,7 @@ namespace FindSimilar2.AudioProxies
 		/// <param name="fileName">Initial file</param>
 		/// <param name="outFileName">Target file</param>
 		/// <param name="targetSampleRate">Target sample rate</param>
+		/// <exception cref="Exception">Thrown when an error occurs in the BASS Audio system</exception>
 		public static void RecodeFileMono(string fileName, string outFileName, int targetSampleRate)
 		{
 			int stream = Bass.BASS_StreamCreateFile(fileName, 0L, 0L, BASSFlag.BASS_STREAM_DECODE | BASSFlag.BASS_SAMPLE_MONO | BASSFlag.BASS_SAMPLE_FLOAT);

@@ -32,6 +32,7 @@ namespace FindSimilar2.Audio
 			// Try to use Un4Seen Bass to check duration
 			BassProxy bass = BassProxy.Instance;
 			double duration = BassProxy.GetDurationInSeconds(fileIn);
+			string logMessage = fileIn;
 			if (duration > 0) {
 				Dbg.WriteLine("Using BASS to decode the file ...");
 
@@ -42,19 +43,25 @@ namespace FindSimilar2.Audio
 					if (startSeconds < 0) {
 						startSeconds = 0;
 					}
-					floatBuffer = BassProxy.ReadMonoFromFile(fileIn, srate, secondsToAnalyze*1000, (int) (startSeconds*1000));
-					
+					try {
+						floatBuffer = BassProxy.ReadMonoFromFile(fileIn, srate, secondsToAnalyze*1000, (int) (startSeconds*1000));
+					} catch (Exception e) {
+						logMessage += " (" + e.Message + ")";
+					}
 					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
 					if (floatBuffer == null) {
-						IOUtils.LogMessageToFile(Program.WARNING_FILES_LOG, fileIn);
+						IOUtils.LogMessageToFile(Program.WARNING_FILES_LOG, logMessage);
 					}
 				} else {
 					// return whole file
-					floatBuffer = BassProxy.ReadMonoFromFile(fileIn, srate, 0, 0);
-
+					try {
+						floatBuffer = BassProxy.ReadMonoFromFile(fileIn, srate, 0, 0);
+					} catch (Exception e) {
+						logMessage += " (" + e.Message + ")";
+					}
 					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
 					if (floatBuffer == null) {
-						IOUtils.LogMessageToFile(Program.WARNING_FILES_LOG, fileIn);
+						IOUtils.LogMessageToFile(Program.WARNING_FILES_LOG, logMessage);
 					}
 				}
 			}

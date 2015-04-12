@@ -95,9 +95,8 @@ namespace FindSimilar2
 				                 			} else {
 				                 				Console.Out.WriteLine("[{1}/{2} - {3}/{4}] Succesfully added {0} to database. (Thread: {5})", fileInfo.Name, filesCounter, filesRemaining.Count, filesAllCounter, filesAll.Count(), Thread.CurrentThread.ManagedThreadId);
 				                 				
-				                 				// Threadsafe increment (TODO: doesn't always seem to work?)
-				                 				//filesCounter++;
-				                 				//filesAllCounter++;
+				                 				// Threadsafe increment
+				                 				// https://pragmaticpattern.wordpress.com/2013/07/03/c-parallel-programming-increment-variable-safely-across-multiple-threads/
 				                 				Interlocked.Increment(ref filesCounter);
 				                 				Interlocked.Increment(ref filesAllCounter);
 				                 			}
@@ -255,7 +254,6 @@ namespace FindSimilar2
 				Application.EnableVisualStyles();
 				Application.SetCompatibleTextRenderingDefault(false);
 				Application.Run(new FindSimilarClientForm());
-				//Application.Run(new WaveEditor.WaveEditor());
 			}
 			
 			private static void FindSoundfingerprinting(FileInfo fi, Repository repository, int numToTake) {
