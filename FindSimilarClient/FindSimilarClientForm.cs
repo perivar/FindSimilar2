@@ -364,7 +364,7 @@ namespace FindSimilar2
 			// Start "please wait" screen
 			splashScreen = new SplashSceenWaitingForm();
 			
-			#if DEBUG
+			#if dontcareDEBUG
 			findSimilarSearch_DoWork(splashScreen, new DoWorkEventArgs(bgWorkerArg));
 			#else
 			splashScreen.DoWork += new SplashSceenWaitingForm.DoWorkEventHandler(findSimilarSearch_DoWork);
@@ -381,7 +381,7 @@ namespace FindSimilar2
 					break;
 				case DialogResult.OK:
 					var argObject = splashScreen.Result.Result as BackgroundWorkerArgument;
-					if (argObject.QueryResultList != null) {
+					if (argObject != null && argObject.QueryResultList != null) {
 						// Get query list from the argument object
 						queryResultList = new BindingList<QueryResult>(argObject.QueryResultList);
 						// update grid
