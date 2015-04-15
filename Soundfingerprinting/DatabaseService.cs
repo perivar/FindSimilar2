@@ -265,6 +265,12 @@ namespace Soundfingerprinting.DbStorage
 							command.Parameters.Add("@totalfingerprints", DbType.Int32);
 							command.Parameters.Add("@signature", DbType.Binary);
 							
+							// Call Prepare after setting the Commandtext and Parameters.
+							// Executing the Prepare method should only be used in situations where the SQL will be executed multiple times.
+							// The process of preparing the SQL statement requires a bit of overhead and thus if the statements are only executed once,
+							// performance will degrade
+							command.Prepare();
+							
 							foreach (var fingerprint in collection) {
 								command.Parameters["@trackid"].Value = fingerprint.TrackId;
 								command.Parameters["@songorder"].Value = fingerprint.SongOrder;
@@ -340,6 +346,12 @@ namespace Soundfingerprinting.DbStorage
 							command.Parameters.Add("@hashtable", DbType.Int32);
 							command.Parameters.Add("@trackid", DbType.Int32);
 							command.Parameters.Add("@fingerprintid", DbType.Int32);
+							
+							// Call Prepare after setting the Commandtext and Parameters.
+							// Executing the Prepare method should only be used in situations where the SQL will be executed multiple times.
+							// The process of preparing the SQL statement requires a bit of overhead and thus if the statements are only executed once,
+							// performance will degrade
+							command.Prepare();
 							
 							foreach (var hashBin in collection) {
 								command.Parameters["@hashbin"].Value = hashBin.Bin;

@@ -398,7 +398,11 @@ namespace FindSimilar2
 				
 				foreach(var nativeTag in tag_info.NativeTags) {
 					string[] keyvalue = nativeTag.Split('=');
-					tags.Add(keyvalue[0], CleanTagValue(keyvalue[1]));
+					if (keyvalue.Length > 1) {
+						tags.Add(keyvalue[0], CleanTagValue(keyvalue[1]));
+					} else {
+						tags.Add(keyvalue[0], "");
+					}					
 				}
 			}
 			return tags;

@@ -75,7 +75,7 @@ namespace Soundfingerprinting.SoundTools
 				
 				// get the final candidate list by only using the potential candidate list
 				if (potentialCandidates.Count > 0) {
-					IList<Fingerprint> fingerprints = dbService.ReadFingerprintById(potentialCandidates.Keys);
+					IList<Fingerprint> fingerprints = dbService.ReadFingerprintById(potentialCandidates.Keys); // TODO: this gives out of memory exception when doSearchEverything
 					Dictionary<Fingerprint, int> finalCandidates = fingerprints.ToDictionary(finger => finger, finger => potentialCandidates[finger.Id].Count);
 					
 					// this is the most time consuming process

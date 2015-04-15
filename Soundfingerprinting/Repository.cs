@@ -286,6 +286,7 @@ namespace Soundfingerprinting
 		/// <returns></returns>
 		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param, out double[][] logSpectrogram, out List<bool[]> fingerprints)
 		{
+			// TODO: wrap all of this within one transaction
 			if (dbService.InsertTrack(track)) {
 
 				// return both logSpectrogram and fingerprints in the out variables
@@ -312,15 +313,14 @@ namespace Soundfingerprinting
 		/// <returns>List of fingerprint entity objects</returns>
 		private List<Fingerprint> AssociateFingerprintsToTrack(IEnumerable<bool[]> fingerprintSignatures, int trackId)
 		{
-			const int FakeId = -1;
+			const int fakeId = -1;
 			var fingers = new List<Fingerprint>();
 			int c = 0;
 			foreach (bool[] signature in fingerprintSignatures)
 			{
-				fingers.Add(new Fingerprint(FakeId, signature, trackId, c));
+				fingers.Add(new Fingerprint(fakeId, signature, trackId, c));
 				c++;
 			}
-
 			return fingers;
 		}
 		
@@ -333,6 +333,7 @@ namespace Soundfingerprinting
 		/// <param name="hashKeys">Number of hash keys (e.g. 4)</param>
 		private bool HashFingerprintsUsingMinHash(IEnumerable<Fingerprint> listOfFingerprintsToHash, Track track, int hashTables, int hashKeys)
 		{
+			const int fakeId = -1;
 			var listToInsert = new List<HashBinMinHash>();
 			foreach (Fingerprint fingerprint in listOfFingerprintsToHash)
 			{
@@ -340,7 +341,7 @@ namespace Soundfingerprinting
 				Dictionary<int, long> hashTable = minHash.GroupMinHashToLSHBuckets(hashBins, hashTables, hashKeys);
 				foreach (KeyValuePair<int, long> item in hashTable)
 				{
-					var hash = new HashBinMinHash(-1, item.Value, item.Key, track.Id, fingerprint.Id);
+					var hash = new HashBinMinHash(fakeId, item.Value, item.Key, track.Id, fingerprint.Id);
 					listToInsert.Add(hash);
 				}
 			}

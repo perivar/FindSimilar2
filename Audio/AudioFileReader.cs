@@ -50,6 +50,7 @@ namespace FindSimilar2.Audio
 					}
 					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
 					if (floatBuffer == null) {
+						Dbg.WriteLine("Failed reading using BASS", logMessage);
 						IOUtils.LogMessageToFile(Program.WARNING_FILES_LOG, logMessage);
 					}
 				} else {
@@ -61,6 +62,7 @@ namespace FindSimilar2.Audio
 					}
 					// if this failes, the duration read from the tags was wrong or it is something wrong with the audio file
 					if (floatBuffer == null) {
+						Dbg.WriteLine("Failed reading using BASS", logMessage);
 						IOUtils.LogMessageToFile(Program.WARNING_FILES_LOG, logMessage);
 					}
 				}
@@ -68,9 +70,10 @@ namespace FindSimilar2.Audio
 
 			// Bass failed reading or never even tried, so use another alternative
 			if (floatBuffer == null) {
-				Dbg.WriteLine("Using MPlayer and SOX to decode the file ...");
-				fileIn = Regex.Replace(fileIn, "%20", " ");
-				floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);
+				// if BASS cannot read it - ignore it!
+				//Dbg.WriteLine("Using MPlayer and SOX to decode the file ...");
+				//fileIn = Regex.Replace(fileIn, "%20", " ");
+				//floatBuffer = DecodeUsingMplayerAndSox(fileIn, srate, secondsToAnalyze);				
 			}
 			return floatBuffer;
 		}
