@@ -67,6 +67,18 @@ namespace FindSimilar2
 			this.version.Text = Program.VERSION;
 			this.ThresholdTablesCombo.DataSource = Enum.GetValues(typeof(ThresholdTables));
 			
+			// check if this is a 32 or 64 bit application
+			if (IntPtr.Size == 4)
+			{
+				// 32-bit
+				this.Text += " (32-bit)";
+			}
+			else if (IntPtr.Size == 8)
+			{
+				// 64-bit
+				this.Text += " (64-bit)";
+			}
+			
 			// Instansiate Soundfingerprinting Repository
 			FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
 			this.databaseService = DatabaseService.Instance;

@@ -29,6 +29,7 @@
 		private void InitializeComponent()
 		{
 			this.components = new System.ComponentModel.Container();
+			System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(FindSimilarClientForm));
 			this.tabControl1 = new System.Windows.Forms.TabControl();
 			this.tabFileSearch = new System.Windows.Forms.TabPage();
 			this.AudioFilePlayBtn = new System.Windows.Forms.Button();
@@ -73,7 +74,7 @@
 			// tabControl1
 			// 
 			this.tabControl1.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-			| System.Windows.Forms.AnchorStyles.Right)));
+									| System.Windows.Forms.AnchorStyles.Right)));
 			this.tabControl1.Controls.Add(this.tabFileSearch);
 			this.tabControl1.Controls.Add(this.tabIdSearch);
 			this.tabControl1.Controls.Add(this.tabStringSearch);
@@ -125,7 +126,7 @@
 			// AudioFileQueryTextBox
 			// 
 			this.AudioFileQueryTextBox.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Left) 
-			| System.Windows.Forms.AnchorStyles.Right)));
+									| System.Windows.Forms.AnchorStyles.Right)));
 			this.AudioFileQueryTextBox.Location = new System.Drawing.Point(68, 4);
 			this.AudioFileQueryTextBox.Name = "AudioFileQueryTextBox";
 			this.AudioFileQueryTextBox.Size = new System.Drawing.Size(554, 20);
@@ -200,8 +201,8 @@
 			// dataGridView1
 			// 
 			this.dataGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-			| System.Windows.Forms.AnchorStyles.Left) 
-			| System.Windows.Forms.AnchorStyles.Right)));
+									| System.Windows.Forms.AnchorStyles.Left) 
+									| System.Windows.Forms.AnchorStyles.Right)));
 			this.dataGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
 			this.dataGridView1.ContextMenuStrip = this.contextMenuStrip1;
 			this.dataGridView1.Location = new System.Drawing.Point(12, 113);
@@ -218,13 +219,13 @@
 			// contextMenuStrip1
 			// 
 			this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-			this.findSimilarToolStripMenuItem,
-			this.openFileLocationToolStripMenuItem,
-			this.copyFileURLToolStripMenuItem,
-			this.openEditorToolStripMenuItem,
-			this.dumpDebugInfoToolStripMenuItem});
+									this.findSimilarToolStripMenuItem,
+									this.openFileLocationToolStripMenuItem,
+									this.copyFileURLToolStripMenuItem,
+									this.openEditorToolStripMenuItem,
+									this.dumpDebugInfoToolStripMenuItem});
 			this.contextMenuStrip1.Name = "contextMenuStrip1";
-			this.contextMenuStrip1.Size = new System.Drawing.Size(215, 136);
+			this.contextMenuStrip1.Size = new System.Drawing.Size(215, 114);
 			// 
 			// findSimilarToolStripMenuItem
 			// 
@@ -409,6 +410,7 @@
 			this.Controls.Add(this.GoBtn);
 			this.Controls.Add(this.dataGridView1);
 			this.Controls.Add(this.tabControl1);
+			this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
 			this.Name = "FindSimilarClientForm";
 			this.Text = "Find Similar";
 			this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FindSimilarClientFormFormClosing);
@@ -423,7 +425,6 @@
 			this.contextMenuStrip1.ResumeLayout(false);
 			this.ResumeLayout(false);
 			this.PerformLayout();
-
 		}
 		private System.Windows.Forms.CheckBox SearchAllFilesCheckbox;
 		private System.Windows.Forms.ComboBox ThresholdTablesCombo;

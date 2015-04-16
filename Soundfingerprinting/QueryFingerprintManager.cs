@@ -91,8 +91,6 @@ namespace Soundfingerprinting.SoundTools
 				int percentage = (int) ((float) (signatureCounter) / (float) signatureTotalCount * 85) + 5;
 				if (splashScreen != null) {
 					splashScreen.SetProgress(percentage, String.Format("Searching for similar fingerprints.\n(Signature {0} of {1})", signatureCounter+1, signatureTotalCount));
-				} else {
-					Console.Write("\r{0}%\t(Signature {1} of {2})     ", percentage, signatureCounter+1, signatureTotalCount);
 				}
 				
 				signatureCounter++;

@@ -26,6 +26,12 @@ namespace FindSimilar2
 	/// </summary>
 	internal sealed class Program
 	{
+		// To enable writing to console from windows form application
+		[System.Runtime.InteropServices.DllImport("kernel32.dll")]
+		static extern bool AttachConsole( int dwProcessId );
+		private const int ATTACH_PARENT_PROCESS = -1;
+		
+		// Properties
 		public static string VERSION = "2.0.4";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
@@ -135,6 +141,10 @@ namespace FindSimilar2
 			[STAThread]
 			private static void Main(string[] args)
 			{
+				// redirect console output to parent process;
+				// must be before any calls to Console.WriteLine()
+				AttachConsole( ATTACH_PARENT_PROCESS );
+				
 				string scanPath = "";
 				double skipDurationAboveSeconds = -1; // less than zero disables this
 				string queryPath = "";
@@ -211,7 +221,6 @@ namespace FindSimilar2
 				if (queryPath != "") {
 					var fi = new FileInfo(queryPath);
 					FindSoundfingerprinting(fi, repository, numToTake);
-					System.Console.ReadLine();
 				}
 				
 				if (queryId != -1) {
@@ -222,12 +231,25 @@ namespace FindSimilar2
 					} else {
 						Console.Out.WriteLine("Track {0} not found!", queryId);
 					}
-					System.Console.ReadLine();
 				}
 			}
 			
 			private static void PrintUsage() {
-				Console.WriteLine("FindSimilar. Version {0}.", VERSION);
+				
+				// check if this is a 32 or 64 bit application
+				string processorArchitecture = "";
+				if (IntPtr.Size == 4)
+				{
+					// 32-bit
+					processorArchitecture = "(32-bit)";
+				}
+				else if (IntPtr.Size == 8)
+				{
+					// 64-bit
+					processorArchitecture = "(64-bit)";
+				}
+				
+				Console.WriteLine("FindSimilar version {0} {1}", VERSION, processorArchitecture);
 				Console.WriteLine("Copyright (C) 2012-2015 Per Ivar Nerseth.");
 				Console.WriteLine();
 				Console.WriteLine("Usage: FindSimilar.exe <Arguments>");
@@ -246,8 +268,6 @@ namespace FindSimilar2
 				Console.WriteLine("\t-num=<number of matches to return when querying>");
 				Console.WriteLine();
 				Console.WriteLine("\t-? or -help=show this usage help>");
-
-				System.Console.ReadLine();
 			}
 			
 			private static void StartGUI() {
@@ -267,7 +287,8 @@ namespace FindSimilar2
 
 					foreach (var entry in queryList)
 					{
-						Console.WriteLine("[{0}]\t{1}   ({2:0.0000})", entry.Id, Path.GetFileName(entry.Path), entry.Similarity);
+						Console.Write(string.Format("[{0}]", entry.Id).PadRight(12));
+						Console.WriteLine("{0} ({1:0.0000})", Path.GetFileName(entry.Path), entry.Similarity);
 					}
 
 				} else {
