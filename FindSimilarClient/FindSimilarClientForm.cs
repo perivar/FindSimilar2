@@ -32,7 +32,6 @@ namespace FindSimilar2
 		private string selectedFilePath = null;
 		
 		// Soundfingerprinting
-		private DatabaseService databaseService = null;
 		private Repository repository = null;
 		
 		BindingSource bs = new BindingSource();
@@ -81,10 +80,8 @@ namespace FindSimilar2
 			
 			// Instansiate Soundfingerprinting Repository
 			FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
-			this.databaseService = DatabaseService.Instance;
-
 			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-			repository = new Repository(permutations, databaseService, fingerprintService);
+			repository = new Repository(permutations, fingerprintService);
 			
 			LessAccurateCheckBox.Visible = true;
 			ThresholdTablesCombo.Visible = true;
@@ -339,7 +336,7 @@ namespace FindSimilar2
 		private void ReadAllTracksSoundfingerprinting() {
 			
 			string limitClause = string.Format("LIMIT {0}", DEFAULT_NUM_TO_TAKE);
-			IList<Track> tracks = databaseService.ReadTracks(limitClause);
+			IList<Track> tracks = DatabaseService.ReadTracks(limitClause);
 			
 			var fingerprintList = (from row in tracks
 			                       orderby row.Id
@@ -357,7 +354,7 @@ namespace FindSimilar2
 			this.dataGridView1.Columns[0].AutoSizeMode = DataGridViewAutoSizeColumnMode.AllCells;
 			this.dataGridView1.Columns[1].AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
 			
-			this.database_count.Text = databaseService.GetTrackCount().ToString();
+			this.database_count.Text = DatabaseService.GetTrackCount().ToString();
 		}
 		#endregion
 		
@@ -456,7 +453,7 @@ namespace FindSimilar2
 			
 			if (queryId != -1) {
 				
-				Track track = databaseService.ReadTrackById(queryId);
+				Track track = DatabaseService.ReadTrackById(queryId);
 				if (track != null) {
 
 					if (track.FilePath != null && File.Exists(track.FilePath)) {
@@ -488,7 +485,7 @@ namespace FindSimilar2
 				
 				// search for tracks
 				string whereClause = string.Format("WHERE tags like '%{0}%' or title like '%{0}%' or filepath like '%{0}%'", queryString);
-				IList<Track> tracks = databaseService.ReadTracks(whereClause);
+				IList<Track> tracks = DatabaseService.ReadTracks(whereClause);
 
 				var fingerprintList = (from row in tracks
 				                       orderby row.Id ascending

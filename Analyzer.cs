@@ -67,7 +67,7 @@ namespace FindSimilar2
 			var spectrumService = new SpectrumService();
 			
 			// Wavelet Service
-			IWaveletDecomposition waveletDecomposition = new Soundfingerprinting.Fingerprinting.Wavelets.StandardHaarWaveletDecomposition();
+			IWaveletDecomposition waveletDecomposition = new StandardHaarWaveletDecomposition();
 			IWaveletService waveletService = new WaveletService(waveletDecomposition);
 
 			// Fingerprint Service

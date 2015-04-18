@@ -33,22 +33,18 @@ namespace Soundfingerprinting
 		/// </summary>
 		private readonly IPermutations permutations;
 		
-		private DatabaseService dbService;
 		private FingerprintService fingerprintService;
 		
 		private static int MAX_SIGNATURE_COUNT = 5; // the number of signatures to reduce to
 		
-		public Repository(IPermutations permutations, DatabaseService dbService, FingerprintService fingerprintService)
+		public Repository(IPermutations permutations, FingerprintService fingerprintService)
 		{
 			this.permutations = permutations;
 			this.minHash = new MinHash(this.permutations);
-			this.dbService = dbService;
 			this.fingerprintService = fingerprintService;
 		}
 		
 		public FingerprintService FingerprintService { get { return this.fingerprintService; } }
-
-		public DatabaseService DatabaseService { get { return this.dbService; } }
 		
 		public MinHash MinHash { get { return this.minHash; } }
 		
@@ -76,7 +72,6 @@ namespace Soundfingerprinting
 			// Query the database using Min Hash
 			Dictionary<int, QueryStats> allCandidates = QueryFingerprintManager.QueryOneSongMinHash(
 				signatures,
-				dbService,
 				minHash,
 				lshHashTables,
 				lshGroupsPerKey,
@@ -84,7 +79,7 @@ namespace Soundfingerprinting
 				ref elapsedMiliseconds);
 
 			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
-			IList<Track> tracks = dbService.ReadTrackById(ids);
+			IList<Track> tracks = DatabaseService.ReadTrackById(ids);
 
 			// Order by Hamming Similarity
 			// Using PLINQ
@@ -130,7 +125,6 @@ namespace Soundfingerprinting
 			// Query the database using Min Hash
 			Dictionary<int, QueryStats> allCandidates = QueryFingerprintManager.QueryOneSongMinHash(
 				signatures,
-				dbService,
 				minHash,
 				lshHashTables,
 				lshGroupsPerKey,
@@ -138,7 +132,7 @@ namespace Soundfingerprinting
 				ref elapsedMiliseconds);
 
 			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
-			IList<Track> tracks = dbService.ReadTrackById(ids);
+			IList<Track> tracks = DatabaseService.ReadTrackById(ids);
 
 			// Order by Hamming Similarity
 			// Using PLINQ
@@ -207,7 +201,6 @@ namespace Soundfingerprinting
 			// Query the database using Min Hash
 			Dictionary<int, QueryStats> allCandidates = QueryFingerprintManager.QueryOneSongMinHash(
 				fingerprints,
-				dbService,
 				minHash,
 				lshHashTables,
 				lshGroupsPerKey,
@@ -219,7 +212,7 @@ namespace Soundfingerprinting
 			if (splashScreen != null) splashScreen.SetProgress(91, String.Format("Found {0} candidates.", allCandidates.Count));
 			
 			IEnumerable<int> ids = allCandidates.Select(p => p.Key);
-			IList<Track> tracks = dbService.ReadTrackById(ids);
+			IList<Track> tracks = DatabaseService.ReadTrackById(ids);
 
 			if (splashScreen != null) splashScreen.SetProgress(95, String.Format("Reading {0} tracks.", tracks.Count));
 			
@@ -287,13 +280,13 @@ namespace Soundfingerprinting
 		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param, out double[][] logSpectrogram, out List<bool[]> fingerprints)
 		{
 			// TODO: wrap all of this within one transaction
-			if (dbService.InsertTrack(track)) {
+			if (DatabaseService.InsertTrack(track)) {
 
 				// return both logSpectrogram and fingerprints in the out variables
 				fingerprints = fingerprintService.CreateFingerprintsFromAudioSamples(param.AudioSamples, param, out logSpectrogram);
 				
 				List<Fingerprint> inserted = AssociateFingerprintsToTrack(fingerprints, track.Id);
-				if (dbService.InsertFingerprint(inserted)) {
+				if (DatabaseService.InsertFingerprint(inserted)) {
 					return HashFingerprintsUsingMinHash(inserted, track, hashTables, hashKeys);
 				} else {
 					return false;
@@ -345,7 +338,7 @@ namespace Soundfingerprinting
 					listToInsert.Add(hash);
 				}
 			}
-			return dbService.InsertHashBin(listToInsert);
+			return DatabaseService.InsertHashBin(listToInsert);
 		}
 	}
 }

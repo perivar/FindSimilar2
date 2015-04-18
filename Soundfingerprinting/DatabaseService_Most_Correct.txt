@@ -1,10 +1,9 @@
-﻿using System;
+using System;
 using System.Data;
 using System.Data.SQLite;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using System.Configuration; // ConfigurationManager
 using Soundfingerprinting.Dao.Entities;
 using Soundfingerprinting.DbStorage.Entities;
 
@@ -13,68 +12,69 @@ namespace Soundfingerprinting.DbStorage
 	// SQL Lite database class
 	// Original idea/class from Soundfingerprinting Project
 	// Heavily modified by perivar@nerseth.com
-	public static class DatabaseService
+	public class DatabaseService
 	{
-		// private variables
-		private static string _connection = string.Empty;
-		private static string _sqliteDbPath = string.Empty;
-		
-		// key name in app.config
-		private const string SqliteDbPathKeyName = "sqlitedbpath";
-		
 		// how to increase sqlite performance
 		// http://stackoverflow.com/questions/4356363/sqlite-net-performance-how-to-speed-up-things
 		// http://www.codeproject.com/Articles/853842/Csharp-Avoiding-Performance-Issues-with-Inserts-in
 		
-		#region SQLiteConnection Methods
+		// private variables
+		private string dbFilePath;
+		private string sqliteConnectionString;
+		
+		#region Singleton Patterns
+		// singleton instance
+		private static DatabaseService instance;
+
 		/// <summary>
-		/// Database path can be set from config otherwise application uses the defaultpath
+		/// Return a DatabaseService Instance
 		/// </summary>
-		/// <returns>connection string</returns>
-		/// <remarks>The idea for a static database class comes from
-		///  Sqlite.DataAccessLayer SqliteDal.cs (http://mycodefunda.blogspot.com/)</remarks>
-		private static string GetConnectionString()
+		/// <returns>A DatabaseService Instance</returns>
+		public static DatabaseService Instance
 		{
-			if (!string.IsNullOrEmpty(_connection)) return _connection;
+			get {
+				if (instance == null)
+					instance = new DatabaseService();
+				return instance;
+			}
+		}
+		#endregion
+		
+		#region Constructor and Destructor
+		protected DatabaseService()
+		{
+			string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
+			string dbdir = Path.Combine(homedir,".findsimilar");
 			
-			// ensure that the _sqliteDbPath is defined
-			InitializeSQLiteDBPath();
+			// set the db file path
+			dbFilePath = Path.Combine(dbdir, "findsimilar.db");
 			
 			bool doResetDatabase = false;
-			if (!File.Exists(_sqliteDbPath)) {
-				CreateDB(_sqliteDbPath);
+			if (!File.Exists(dbFilePath)) {
+				CreateDB(dbFilePath);
 				doResetDatabase = true;
 			}
 			
 			// store the connection string
-			_connection = GetSQLiteConnectionString(_sqliteDbPath);
+			sqliteConnectionString = GetSQLiteConnectionString(dbFilePath);
 			
 			if (doResetDatabase) {
 				AddDatabaseTables();
 			}
-			
-			return _connection;
 		}
 		
-		private static void InitializeSQLiteDBPath() {
-			if (!string.IsNullOrEmpty(_sqliteDbPath)) return;
-
-			// http://www.nikola-breznjak.com/blog/c/how-to-use-app-config-in-visual-studio-c-net/
-			if (ConfigurationManager.AppSettings[SqliteDbPathKeyName] != null) {
-				_sqliteDbPath = ConfigurationManager.AppSettings[SqliteDbPathKeyName];
-			} else {
-				// use default directory
-				// sqliteDbPath = Path.Combine(Directory.GetParent(Assembly.GetExecutingAssembly().Location).FullName,"DataBase","Sqlite.db");
-
-				// store in the users home directory
-				string homedir = Environment.GetFolderPath(Environment.SpecialFolder.Personal);
-				string dbdir = Path.Combine(homedir,".findsimilar");
-				
-				// set the db file path
-				_sqliteDbPath = Path.Combine(dbdir, "findsimilar.db");
-			}
+		~DatabaseService()
+		{
+			// removed this because is caused a ObjectDisposedException:
+			// Unhandled Exception: System.ObjectDisposedException: Cannot access a disposed object.
+			// Object name: 'SQLiteConnection'.
+			// at System.Data.SQLite.SQLiteConnection.CheckDisposed()
+			//dbcon.Close();
 		}
+
+		#endregion
 		
+		#region SQLiteConnection Methods
 		private static string GetSQLiteConnectionString(string dbFilePath) {
 			
 			var connBuilder = new SQLiteConnectionStringBuilder();
@@ -169,23 +169,20 @@ namespace Soundfingerprinting.DbStorage
 		#endregion
 		
 		#region Reset Database Methods
-		public static void ResetDatabase() {
-			
-			// ensure that the _sqliteDbPath is defined
-			InitializeSQLiteDBPath();
+		public void ResetDatabase() {
 			
 			// if using sql lite connection pooling
 			GC.Collect();
 			GC.WaitForPendingFinalizers();
 			
-			DeleteDB(_sqliteDbPath);
-			CreateDB(_sqliteDbPath);
+			DeleteDB(dbFilePath);
+			CreateDB(dbFilePath);
 			
 			AddDatabaseTables();
 		}
 		
-		public static void AddDatabaseTables() {
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+		public void AddDatabaseTables() {
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open(); // must open connection in order to begin a transaction
 				using (var transaction = connection.BeginTransaction())
@@ -248,10 +245,10 @@ namespace Soundfingerprinting.DbStorage
 		#endregion
 		
 		#region Inserts
-		public static bool InsertFingerprint(IEnumerable<Fingerprint> collection)
+		public bool InsertFingerprint(IEnumerable<Fingerprint> collection)
 		{
 			try {
-				using (var connection = new SQLiteConnection(GetConnectionString()))
+				using (var connection = new SQLiteConnection(sqliteConnectionString))
 				{
 					connection.Open(); // must open connection in order to begin a transaction
 					using (var transaction = connection.BeginTransaction())
@@ -267,12 +264,6 @@ namespace Soundfingerprinting.DbStorage
 							command.Parameters.Add("@songorder", DbType.Int32);
 							command.Parameters.Add("@totalfingerprints", DbType.Int32);
 							command.Parameters.Add("@signature", DbType.Binary);
-							
-							// Call Prepare after setting the Commandtext and Parameters.
-							// Executing the Prepare method should only be used in situations where the SQL will be executed multiple times.
-							// The process of preparing the SQL statement requires a bit of overhead and thus if the statements are only executed once,
-							// performance will degrade
-							command.Prepare();
 							
 							foreach (var fingerprint in collection) {
 								command.Parameters["@trackid"].Value = fingerprint.TrackId;
@@ -295,10 +286,10 @@ namespace Soundfingerprinting.DbStorage
 			}
 		}
 
-		public static bool InsertTrack(Track track)
+		public bool InsertTrack(Track track)
 		{
 			try {
-				using (var connection = new SQLiteConnection(GetConnectionString()))
+				using (var connection = new SQLiteConnection(sqliteConnectionString))
 				{
 					connection.Open(); // must open connection in order to begin a transaction
 					using (var transaction = connection.BeginTransaction())
@@ -331,10 +322,10 @@ namespace Soundfingerprinting.DbStorage
 			}
 		}
 		
-		public static bool InsertHashBin(IEnumerable<HashBinMinHash> collection)
+		public bool InsertHashBin(IEnumerable<HashBinMinHash> collection)
 		{
 			try {
-				using (var connection = new SQLiteConnection(GetConnectionString()))
+				using (var connection = new SQLiteConnection(sqliteConnectionString))
 				{
 					connection.Open(); // must open connection in order to begin a transaction
 					using (var transaction = connection.BeginTransaction())
@@ -349,12 +340,6 @@ namespace Soundfingerprinting.DbStorage
 							command.Parameters.Add("@hashtable", DbType.Int32);
 							command.Parameters.Add("@trackid", DbType.Int32);
 							command.Parameters.Add("@fingerprintid", DbType.Int32);
-							
-							// Call Prepare after setting the Commandtext and Parameters.
-							// Executing the Prepare method should only be used in situations where the SQL will be executed multiple times.
-							// The process of preparing the SQL statement requires a bit of overhead and thus if the statements are only executed once,
-							// performance will degrade
-							command.Prepare();
 							
 							foreach (var hashBin in collection) {
 								command.Parameters["@hashbin"].Value = hashBin.Bin;
@@ -379,9 +364,9 @@ namespace Soundfingerprinting.DbStorage
 		#endregion
 
 		#region Reads
-		public static int GetTrackCount() {
+		public int GetTrackCount() {
 			int count = -1;
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				using (var command = connection.CreateCommand())
 				{
@@ -393,11 +378,11 @@ namespace Soundfingerprinting.DbStorage
 			return count;
 		}
 
-		public static IList<Fingerprint> ReadFingerprints()
+		public IList<Fingerprint> ReadFingerprints()
 		{
 			var fingerprints = new List<Fingerprint>();
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -421,11 +406,11 @@ namespace Soundfingerprinting.DbStorage
 			return fingerprints;
 		}
 
-		public static IList<Fingerprint> ReadFingerprintsByTrackId(int trackId, int numberOfFingerprintsToRead)
+		public IList<Fingerprint> ReadFingerprintsByTrackId(int trackId, int numberOfFingerprintsToRead)
 		{
 			var fingerprints = new List<Fingerprint>();
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -451,7 +436,7 @@ namespace Soundfingerprinting.DbStorage
 			return fingerprints;
 		}
 
-		public static IDictionary<int, IList<Fingerprint>> ReadFingerprintsByMultipleTrackId(
+		public IDictionary<int, IList<Fingerprint>> ReadFingerprintsByMultipleTrackId(
 			IEnumerable<Track> tracks, int numberOfFingerprintsToRead)
 		{
 			var result = new Dictionary<int, IList<Fingerprint>>();
@@ -462,7 +447,7 @@ namespace Soundfingerprinting.DbStorage
 			
 			int lastTrackId = -1;
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -501,11 +486,11 @@ namespace Soundfingerprinting.DbStorage
 			return result;
 		}
 
-		public static Fingerprint ReadFingerprintById(int id)
+		public Fingerprint ReadFingerprintById(int id)
 		{
 			Fingerprint fingerprint = null;
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -530,14 +515,14 @@ namespace Soundfingerprinting.DbStorage
 			return fingerprint;
 		}
 
-		public static IList<Fingerprint> ReadFingerprintById(IEnumerable<int> ids)
+		public IList<Fingerprint> ReadFingerprintById(IEnumerable<int> ids)
 		{
 			var fingerprints = new List<Fingerprint>();
 
 			string statementValueTags = String.Join(",", ids);
 			string query = String.Format("SELECT id, trackid, songorder, totalfingerprints, signature FROM [fingerprints] WHERE (id IN ({0}));", statementValueTags);
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -562,11 +547,11 @@ namespace Soundfingerprinting.DbStorage
 			return fingerprints;
 		}
 
-		public static IList<string> ReadTrackFilenames() {
+		public IList<string> ReadTrackFilenames() {
 			
 			var filenames = new List<string>();
-			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -582,15 +567,15 @@ namespace Soundfingerprinting.DbStorage
 					}
 				}
 			}
-			
+
 			return filenames;
 		}
 
-		public static IList<Track> ReadTracks()
+		public IList<Track> ReadTracks()
 		{
 			var tracks = new List<Track>();
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -618,7 +603,7 @@ namespace Soundfingerprinting.DbStorage
 			return tracks;
 		}
 
-		public static IList<Track> ReadTracks(string whereClause)
+		public IList<Track> ReadTracks(string whereClause)
 		{
 			var tracks = new List<Track>();
 			
@@ -627,7 +612,7 @@ namespace Soundfingerprinting.DbStorage
 				query = string.Format("{0} {1}", query, whereClause);
 			}
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -655,11 +640,11 @@ namespace Soundfingerprinting.DbStorage
 			return tracks;
 		}
 
-		public static Track ReadTrackById(int id)
+		public Track ReadTrackById(int id)
 		{
 			Track track = null;
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -687,14 +672,14 @@ namespace Soundfingerprinting.DbStorage
 			return track;
 		}
 
-		public static IList<Track> ReadTrackById(IEnumerable<int> ids)
+		public IList<Track> ReadTrackById(IEnumerable<int> ids)
 		{
 			var tracks = new List<Track>();
 			
 			string statementValueTags = String.Join(",", ids);
 			string query = String.Format("SELECT id, albumid, length, artist, title, filepath FROM [tracks] WHERE (id IN ({0}));", statementValueTags);
 			
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -727,13 +712,13 @@ namespace Soundfingerprinting.DbStorage
 		/// </summary>
 		/// <param name="hashBuckets"></param>
 		/// <returns>Return dictionary with fingerprintids as keys and the corresponding hashbins as values</returns>
-		public static IDictionary<int, IList<HashBinMinHash>> ReadFingerprintsByHashBucketLsh(long[] hashBuckets) {
+		public IDictionary<int, IList<HashBinMinHash>> ReadFingerprintsByHashBucketLsh(long[] hashBuckets) {
 			
 			IDictionary<int, IList<HashBinMinHash>> result = new Dictionary<int, IList<HashBinMinHash>>();
 			
 			string statementValueTags = String.Join(",", hashBuckets);
 
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())
@@ -770,13 +755,13 @@ namespace Soundfingerprinting.DbStorage
 		/// Read all fingerprints ignoring the hash-buckets (e.g. HashBins)
 		/// </summary>
 		/// <returns>Return dictionary with fingerprintids as keys and the corresponding hashbins as values</returns>
-		public static IDictionary<int, IList<HashBinMinHash>> ReadAllFingerprints() {
+		public IDictionary<int, IList<HashBinMinHash>> ReadAllFingerprints() {
 			
 			IDictionary<int, IList<HashBinMinHash>> result = new Dictionary<int, IList<HashBinMinHash>>();
 			
 			string query = String.Format("SELECT id, hashbin, hashtable, trackid, fingerprintid FROM hashbins");
 
-			using (var connection = new SQLiteConnection(GetConnectionString()))
+			using (var connection = new SQLiteConnection(sqliteConnectionString))
 			{
 				connection.Open();
 				using (var command = connection.CreateCommand())

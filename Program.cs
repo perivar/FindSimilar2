@@ -26,13 +26,8 @@ namespace FindSimilar2
 	/// </summary>
 	internal sealed class Program
 	{
-		// To enable writing to console from windows form application
-		[System.Runtime.InteropServices.DllImport("kernel32.dll")]
-		static extern bool AttachConsole( int dwProcessId );
-		private const int ATTACH_PARENT_PROCESS = -1;
-		
 		// Properties
-		public static string VERSION = "2.0.4";
+		public static string VERSION = "2.0.5";
 		public static FileInfo FAILED_FILES_LOG = new FileInfo("failed_files_log.txt");
 		public static FileInfo WARNING_FILES_LOG = new FileInfo("warning_files_log.txt");
 
@@ -64,15 +59,15 @@ namespace FindSimilar2
 				
 				// Get all already processed files stored in the database and store in memory
 				// It seems to work well with huge volumes of files (200k)
-				IList<string> filesAlreadyProcessed = repository.DatabaseService.ReadTrackFilenames();
+				IList<string> filesAlreadyProcessed = DatabaseService.ReadTrackFilenames();
 				Console.Out.WriteLine("Database contains {0} already processed files.", filesAlreadyProcessed.Count);
 
 				// find the files that has not already been added to the database
 				List<string> filesRemaining = filesAll.Except(filesAlreadyProcessed).ToList();
 				Console.Out.WriteLine("Found {0} files remaining in scan directory to be processed.", filesRemaining.Count);
 
-				int filesCounter = 1;
-				int filesAllCounter = filesAlreadyProcessed.Count + 1;
+				int filesCounter = 0;
+				int filesAllCounter = filesAlreadyProcessed.Count;
 				
 				#if !DEBUG
 				Console.Out.WriteLine("Running in multi-threaded mode!");
@@ -87,7 +82,6 @@ namespace FindSimilar2
 				                 		var fileInfo = new FileInfo(file);
 
 				                 		// Try to use Un4Seen Bass to check duration
-				                 		BassProxy bass = BassProxy.Instance;
 				                 		double duration = BassProxy.GetDurationInSeconds(fileInfo.FullName);
 
 				                 		// check if we should skip files longer than x seconds
@@ -99,12 +93,11 @@ namespace FindSimilar2
 				                 				Console.Out.WriteLine("Failed! Could not generate audio fingerprint for {0}!", fileInfo.Name);
 				                 				IOUtils.LogMessageToFile(FAILED_FILES_LOG, fileInfo.FullName);
 				                 			} else {
-				                 				Console.Out.WriteLine("[{1}/{2} - {3}/{4}] Succesfully added {0} to database. (Thread: {5})", fileInfo.Name, filesCounter, filesRemaining.Count, filesAllCounter, filesAll.Count(), Thread.CurrentThread.ManagedThreadId);
-				                 				
 				                 				// Threadsafe increment
 				                 				// https://pragmaticpattern.wordpress.com/2013/07/03/c-parallel-programming-increment-variable-safely-across-multiple-threads/
-				                 				Interlocked.Increment(ref filesCounter);
-				                 				Interlocked.Increment(ref filesAllCounter);
+				                 				var filesCounterNow = Interlocked.Increment(ref filesCounter);
+				                 				var filesAllCounterNow  = Interlocked.Increment(ref filesAllCounter);
+				                 				Console.Out.WriteLine("[{1}/{2} - {3}/{4}] Succesfully added {0} to database. (Thread: {5})", fileInfo.Name, filesCounter, filesRemaining.Count, filesAllCounter, filesAll.Count(), Thread.CurrentThread.ManagedThreadId);
 				                 			}
 				                 		} else {
 				                 			if (!silent) Console.Out.WriteLine("Skipping {0} since duration exceeds limit ({1:0.00} > {2:0.00} sec.)", fileInfo.Name, duration, skipDurationAboveSeconds);
@@ -141,10 +134,6 @@ namespace FindSimilar2
 			[STAThread]
 			private static void Main(string[] args)
 			{
-				// redirect console output to parent process;
-				// must be before any calls to Console.WriteLine()
-				AttachConsole( ATTACH_PARENT_PROCESS );
-				
 				string scanPath = "";
 				double skipDurationAboveSeconds = -1; // less than zero disables this
 				string queryPath = "";
@@ -201,15 +190,14 @@ namespace FindSimilar2
 				}
 				
 				// Instansiate soundfingerprinting Repository
-				DatabaseService databaseService = DatabaseService.Instance;
 				FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
 				IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
-				var repository = new Repository(permutations, databaseService, fingerprintService);
+				var repository = new Repository(permutations, fingerprintService);
 				
 				if (scanPath != "") {
 					if (IOUtils.IsDirectory(scanPath)) {
 						if (resetdb) {
-							databaseService.ResetDatabase();
+							DatabaseService.ResetDatabase();
 						}
 						Console.WriteLine("FindSimilar. Version {0}.", VERSION);
 						ScanDirectory(scanPath, repository, skipDurationAboveSeconds, silent);
@@ -224,7 +212,7 @@ namespace FindSimilar2
 				}
 				
 				if (queryId != -1) {
-					Track track = databaseService.ReadTrackById(queryId);
+					Track track = DatabaseService.ReadTrackById(queryId);
 					if (track != null && track.FilePath != null) {
 						var fi = new FileInfo(track.FilePath);
 						FindSoundfingerprinting(fi, repository, numToTake);

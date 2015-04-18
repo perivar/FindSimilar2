@@ -29,7 +29,6 @@ namespace Soundfingerprinting.SoundTools
 		/// <returns>Dictionary with Tracks ID's and the Query Statistics</returns>
 		public static Dictionary<Int32, QueryStats> QueryOneSongMinHash(
 			IEnumerable<bool[]> signatures,
-			DatabaseService dbService,
 			MinHash minHash,
 			int lshHashTables,
 			int lshGroupsPerKey,
@@ -57,7 +56,7 @@ namespace Soundfingerprinting.SoundTools
 
 				IDictionary<int, IList<HashBinMinHash>> candidates = null;
 				if (doSearchEverything) {
-					candidates = dbService.ReadAllFingerprints();
+					candidates = DatabaseService.ReadAllFingerprints();
 				} else {
 					// Compute Min Hash on randomly selected fingerprint
 					int[] bin = minHash.ComputeMinHashSignature(signature);
@@ -67,7 +66,7 @@ namespace Soundfingerprinting.SoundTools
 					long[] hashbuckets = hashes.Values.ToArray();
 					
 					// Find all candidates by querying the database for those hashbuckets
-					candidates = dbService.ReadFingerprintsByHashBucketLsh(hashbuckets);
+					candidates = DatabaseService.ReadFingerprintsByHashBucketLsh(hashbuckets);
 				}
 				
 				// Reduce the potential candidates list if the number of hash tables found for each signature are less than the threshold
@@ -75,7 +74,7 @@ namespace Soundfingerprinting.SoundTools
 				
 				// get the final candidate list by only using the potential candidate list
 				if (potentialCandidates.Count > 0) {
-					IList<Fingerprint> fingerprints = dbService.ReadFingerprintById(potentialCandidates.Keys); // TODO: this gives out of memory exception when doSearchEverything
+					IList<Fingerprint> fingerprints = DatabaseService.ReadFingerprintById(potentialCandidates.Keys); // TODO: this gives out of memory exception when doSearchEverything
 					Dictionary<Fingerprint, int> finalCandidates = fingerprints.ToDictionary(finger => finger, finger => potentialCandidates[finger.Id].Count);
 					
 					// this is the most time consuming process

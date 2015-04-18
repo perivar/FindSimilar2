@@ -23,7 +23,6 @@ namespace FindSimilar2
 	public partial class CompareAudioForm : Form
 	{
 		// Soundfingerprinting
-		private readonly DatabaseService databaseService = null;
 		private readonly Repository repository = null;
 		
 		public CompareAudioForm()
@@ -35,11 +34,9 @@ namespace FindSimilar2
 			
 			// Instansiate Soundfingerprinting Repository
 			FingerprintService fingerprintService = Analyzer.GetSoundfingerprintingService();
-			this.databaseService = DatabaseService.Instance;
-
-			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");			
+			IPermutations permutations = new LocalPermutations("Soundfingerprinting\\perms.csv", ",");
 			IFingerprintingConfiguration fingerprintingConfigCreation = new FullFrequencyFingerprintingConfiguration();
-			repository = new Repository(permutations, databaseService, fingerprintService);
+			repository = new Repository(permutations, fingerprintService);
 			var imageService = new ImageService(fingerprintService.SpectrumService, fingerprintService.WaveletService);
 			
 			var filePathAudio1 = new FileInfo(@"C:\Users\perivar.nerseth\Music\Test Samples Database\VDUB1 Snare 004.wav");
