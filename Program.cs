@@ -45,9 +45,6 @@ namespace FindSimilar2
 			
 			Stopwatch stopWatch = Stopwatch.StartNew();
 			
-			FAILED_FILES_LOG.Delete();
-			WARNING_FILES_LOG.Delete();
-			
 			// scan directory for audio files
 			try
 			{
@@ -198,6 +195,8 @@ namespace FindSimilar2
 					if (IOUtils.IsDirectory(scanPath)) {
 						if (resetdb) {
 							DatabaseService.ResetDatabase();
+							FAILED_FILES_LOG.Delete();
+							WARNING_FILES_LOG.Delete();
 						}
 						Console.WriteLine("FindSimilar. Version {0}.", VERSION);
 						ScanDirectory(scanPath, repository, skipDurationAboveSeconds, silent);
