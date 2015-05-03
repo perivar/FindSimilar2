@@ -279,7 +279,7 @@ namespace Soundfingerprinting
 		/// <returns></returns>
 		public bool InsertTrackInDatabaseUsingSamples(Track track, int hashTables, int hashKeys, WorkUnitParameterObject param, out double[][] logSpectrogram, out List<bool[]> fingerprints)
 		{
-			// TODO: wrap all of this within one transaction
+			// TODO: wrap all of this within one transaction ?
 			if (DatabaseService.InsertTrack(track)) {
 
 				// return both logSpectrogram and fingerprints in the out variables
@@ -308,11 +308,11 @@ namespace Soundfingerprinting
 		{
 			const int fakeId = -1;
 			var fingers = new List<Fingerprint>();
-			int c = 0;
+			int songOrderCounter = 0;
 			foreach (bool[] signature in fingerprintSignatures)
 			{
-				fingers.Add(new Fingerprint(fakeId, signature, trackId, c));
-				c++;
+				fingers.Add(new Fingerprint(fakeId, signature, trackId, songOrderCounter));
+				songOrderCounter++;
 			}
 			return fingers;
 		}
