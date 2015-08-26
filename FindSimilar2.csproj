@@ -8,7 +8,7 @@
     <OutputType>Exe</OutputType>
     <RootNamespace>FindSimilar2</RootNamespace>
     <AssemblyName>FindSimilar2</AssemblyName>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <NoWin32Manifest>False</NoWin32Manifest>
     <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
@@ -40,7 +40,7 @@
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
     <StartAction>Project</StartAction>
-    <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -resetdb</StartArguments>
+    <StartArguments>-gui</StartArguments>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
     <OutputPath>bin\Release\</OutputPath>
@@ -52,6 +52,9 @@
     <StartAction>Project</StartAction>
     <StartArguments>-scandir="C:\Users\perivar.nerseth\OneDrive\Audio\FL Projects" -resetdb</StartArguments>
     <BaseIntermediateOutputPath>obj\</BaseIntermediateOutputPath>
+  </PropertyGroup>
+  <PropertyGroup>
+    <ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>None</ResolveAssemblyWarnOrErrorOnTargetArchitectureMismatch>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Bass.Net">
@@ -89,19 +92,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\Arguments.cs">
+    <Compile Include="..\CommonUtils\Library\Source\Arguments.cs">
       <Link>Arguments.cs</Link>
     </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\Audio\RiffRead.cs">
+    <Compile Include="..\CommonUtils\Library\Source\Audio\RiffRead.cs">
       <Link>RiffRead.cs</Link>
     </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\BinaryFile.cs">
+    <Compile Include="..\CommonUtils\Library\Source\BinaryFile.cs">
       <Link>BinaryFile.cs</Link>
     </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\IOUtils.cs">
+    <Compile Include="..\CommonUtils\Library\Source\ImageUtils.cs">
+      <Link>ImageUtils.cs</Link>
+    </Compile>
+    <Compile Include="..\CommonUtils\Library\Source\IOUtils.cs">
       <Link>IOUtils.cs</Link>
     </Compile>
-    <Compile Include="..\AudioVSTToolbox\CommonUtils\StringUtils.cs">
+    <Compile Include="..\CommonUtils\Library\Source\StringUtils.cs">
       <Link>StringUtils.cs</Link>
     </Compile>
     <Compile Include="Analyzer.cs" />
